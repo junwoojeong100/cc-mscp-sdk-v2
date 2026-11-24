@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run Claude Code on GitHub Copilot models — hands-on guides</title>
+<meta name="description" content="Connect Claude Code to GitHub Copilot models through a local Microsoft Copilot SDK bridge. Two hands-on guides with real screen captures and recorded walkthroughs: ① Direct, ② through LiteLLM.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+<meta property="og:title" content="Run Claude Code on GitHub Copilot models — hands-on guides">
+<meta property="og:description" content="Two hands-on guides with real screen captures and recorded walkthroughs: ① Direct, ② through LiteLLM.">
+<link rel="icon" href="data:,">
+<script>
+// Same storage key and JSON format as the guides, so the theme carries over between pages.
+(() => {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem("handson:theme")); } catch { /* storage may be blocked */ }
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.dataset.theme = saved === "dark" || saved === "light" ? saved : dark ? "dark" : "light";
+})();
+</script>
+<style>
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f0f2f6;
+  --text: #1a1f29;
+  --muted: #586274;
+  --border: #e1e5ec;
+  --accent: #2563eb;
+  --accent-soft: #e8f0ff;
+  --ok: #137a45;
+  --ok-soft: #e6f6ec;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 8px 24px rgba(16, 24, 40, .08);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0c1017;
+  --surface: #151b25;
+  --surface-2: #1b2330;
+  --text: #e6ebf3;
+  --muted: #98a3b6;
+  --border: #283244;
+  --accent: #6ea2ff;
+  --accent-soft: #1a2640;
+  --ok: #4cc58a;
+  --ok-soft: #12271d;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 17px/1.7 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-wrap: break-word;
+}
+a { color: var(--accent); text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+/* ---------- top bar ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; gap: 16px;
+  padding: 10px 20px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.brand { margin-right: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 700; font-size: 15px; letter-spacing: -.01em; white-space: nowrap; }
+.brand small { font-weight: 500; color: var(--muted); margin-left: 8px; }
+.toplink { flex: none; font-size: 14px; font-weight: 600; color: var(--text); text-decoration: none; }
+.toplink:hover { color: var(--accent); }
+.langlink {
+  flex: none; white-space: nowrap; font-size: 13px; font-weight: 600; color: var(--text); text-decoration: none;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 99px; padding: 6px 14px;
+}
+.langlink:hover { border-color: var(--accent); color: var(--accent); }
+.iconbtn {
+  flex: none; white-space: nowrap;
+  appearance: none; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600;
+  color: var(--text); background: var(--surface); border: 1px solid var(--border);
+  border-radius: 99px; padding: 6px 14px;
+}
+.iconbtn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- hero ---------- */
+.hero {
+  background:
+    radial-gradient(900px 380px at 85% -10%, rgba(80, 140, 255, .35), transparent 60%),
+    radial-gradient(700px 320px at 0% 110%, rgba(32, 182, 168, .25), transparent 60%),
+    linear-gradient(160deg, #0b1124 0%, #111c3d 100%);
+  color: #f3f6ff;
+  padding: 56px 24px 104px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; }
+.eyebrow { display: inline-block; font-size: 14px; font-weight: 700; letter-spacing: .02em; color: #9fc0ff; background: rgba(110, 162, 255, .14); border: 1px solid rgba(110, 162, 255, .35); border-radius: 99px; padding: 5px 16px; }
+.hero h1 { font-size: clamp(30px, 4.6vw, 46px); line-height: 1.2; letter-spacing: -.02em; margin: 18px 0 14px; font-weight: 800; text-wrap: balance; }
+.hero .lead { font-size: clamp(17px, 2vw, 20px); line-height: 1.65; color: #d6e0f7; max-width: 44em; margin: 0; }
+
+/* ---------- guide cards ---------- */
+main.wrap { padding: 0 24px; margin-top: -56px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 22px; }
+.card {
+  display: flex; flex-direction: column; gap: 16px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+  padding: 26px 26px 24px; box-shadow: var(--shadow);
+}
+.card-head { display: flex; align-items: center; gap: 12px; }
+.num { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 19px; }
+.card h2 { margin: 0; font-size: 22px; line-height: 1.35; letter-spacing: -.01em; }
+.card h2 small { display: block; font-size: 14px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+.badge { margin-left: auto; font-size: 13px; font-weight: 700; line-height: 1.6; padding: 2px 12px; border-radius: 99px; color: var(--muted); background: var(--surface-2); border: 1px solid var(--border); }
+.badge.ok { color: var(--ok); background: var(--ok-soft); border-color: transparent; }
+.flow {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 12px 14px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px;
+  font-size: 13.5px; font-weight: 600; line-height: 1.5;
+}
+.flow span { padding: 3px 9px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; white-space: nowrap; }
+.flow span.hl { border-color: var(--accent); color: var(--accent); }
+.flow i { font-style: normal; color: var(--muted); }
+.desc { margin: 0; font-size: 16.5px; line-height: 1.7; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.chips li { font-size: 14px; line-height: 1.6; padding: 3px 11px; color: var(--muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; }
+.chips b { color: var(--text); }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; padding-top: 4px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; text-decoration: none; cursor: pointer;
+  font: 700 15.5px/1 inherit; padding: 13px 20px; border-radius: 12px; border: 1px solid transparent;
+}
+.btn.primary { background: #2563eb; color: #fff; box-shadow: 0 6px 18px rgba(37, 99, 235, .3); }
+.btn.primary:hover { background: #1d4fd8; }
+.btn.ghost { color: var(--text); background: var(--surface); border-color: var(--border); }
+.btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- footer ---------- */
+.foot { max-width: 1040px; margin: 36px auto 0; padding: 0 24px 64px; color: var(--muted); font-size: 14.5px; line-height: 1.75; }
+.foot p { margin: 0 0 10px; }
+.foot b { color: var(--text); }
+
+@media (max-width: 640px) {
+  .topbar { gap: 12px; padding: 10px 16px; }
+  .brand small, .toplink { display: none; }
+  .hero { padding: 40px 20px 92px; }
+  main.wrap { padding: 0 16px; }
+  .card { padding: 22px 20px; }
+  .foot { padding: 0 20px 48px; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Claude Code × Microsoft Copilot SDK<small>Hands-on guides</small></div>
+  <a class="toplink" href="https://github.com/junwoojeong100/cc-mscp-sdk-v2">GitHub</a>
+  <a class="langlink" id="langLink" href="index.html" hreflang="ko">Korean</a>
+  <button class="iconbtn" id="themeBtn" type="button">Dark mode</button>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">2 hands-on guides · screenshots + recorded video</span>
+    <h1>Run Claude Code on GitHub Copilot models</h1>
+    <p class="lead">A local bridge forwards Claude Code's requests to the Microsoft Copilot SDK. Pick one of the two setups below and follow along with real terminal screenshots and a recorded walkthrough.</p>
+  </div>
+</section>
+
+<main class="wrap">
+  <div class="cards">
+    <article class="card">
+      <div class="card-head">
+        <span class="num" aria-hidden="true">①</span>
+        <h2>Direct<small>No LiteLLM</small></h2>
+        <span class="badge ok">Recommended</span>
+      </div>
+      <p class="flow" role="img" aria-label="Request path: Claude Code, local bridge, Copilot SDK"><span>Claude Code</span><i>→</i><span class="hl">Local bridge</span><i>→</i><span>Copilot SDK</span></p>
+      <p class="desc">You only need <b>one local bridge</b>, with no gateway in between. Follow install → log in → check → run, and a Copilot model answers right inside Claude Code. This setup is enough for most people.</p>
+      <ul class="chips">
+        <li><b>About 10 min</b></li>
+        <li>macOS · Linux</li>
+        <li>No Anthropic API key</li>
+      </ul>
+      <div class="actions">
+        <a class="btn primary" href="HANDS_ON_DIRECT_EN.html">Open guide ① →</a>
+        <a class="btn ghost" href="HANDS_ON_DIRECT_EN.html#video">Watch the video first</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-head">
+        <span class="num" aria-hidden="true">②</span>
+        <h2>Through LiteLLM<small>Gateway operations</small></h2>
+        <span class="badge">Optional</span>
+      </div>
+      <p class="flow" role="img" aria-label="Request path: Claude Code, LiteLLM, local bridge, Copilot SDK"><span>Claude Code</span><i>→</i><span class="hl">LiteLLM</span><i>→</i><span>Local bridge</span><i>→</i><span>Copilot SDK</span></p>
+      <p class="desc">Use this setup when you want a LiteLLM gateway in front of the bridge, for example to get request logs. Start the bridge and LiteLLM in <b>Terminal A</b>; Claude Code in <b>Terminal B</b> then answers through LiteLLM with a Copilot model.</p>
+      <ul class="chips">
+        <li><b>About 20 min</b> (incl. first LiteLLM install)</li>
+        <li>2 terminals</li>
+        <li>Needs uv</li>
+      </ul>
+      <div class="actions">
+        <a class="btn primary" href="HANDS_ON_LITELLM_EN.html">Open guide ② →</a>
+        <a class="btn ghost" href="HANDS_ON_LITELLM_EN.html#video">Watch the video first</a>
+      </div>
+    </article>
+  </div>
+</main>
+
+<footer class="foot">
+  <p><b>Unofficial integration.</b> This setup lets Claude Code use GitHub Copilot models; neither Anthropic nor GitHub (Microsoft) supports this combination. The screens and videos in the guides were captured from real runs.</p>
+  <p>More: <a href="https://github.com/junwoojeong100/cc-mscp-sdk-v2/blob/main/README.md">README</a> · <a href="https://github.com/junwoojeong100/cc-mscp-sdk-v2/blob/main/docs/DIAGNOSTICS.md">Diagnostics</a> · <a href="https://github.com/junwoojeong100/cc-mscp-sdk-v2/blob/main/docs/ARCHITECTURE.md">Architecture</a> · <a href="https://github.com/junwoojeong100/cc-mscp-sdk-v2/blob/main/docs/LITELLM.md">LiteLLM guide (full)</a> · <a href="https://github.com/junwoojeong100/cc-mscp-sdk-v2">GitHub repository</a> · <a href="https://github.com/microsoft/copilot-sdk">Microsoft Copilot SDK</a></p>
+</footer>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const btn = document.getElementById("themeBtn");
+  const paint = () => { btn.textContent = root.dataset.theme === "dark" ? "Light mode" : "Dark mode"; };
+  paint();
+  btn.addEventListener("click", () => {
+    const next = root.dataset.theme === "dark" ? "light" : "dark";
+    root.dataset.theme = next;
+    paint();
+    try { localStorage.setItem("handson:theme", JSON.stringify(next)); } catch { /* storage may be blocked */ }
+  });
+  document.getElementById("langLink").addEventListener("click", () => {
+    try { localStorage.setItem("handson:lang", "ko"); } catch { /* storage may be blocked */ }
+  });
+})();
+</script>
+</body>
+</html>

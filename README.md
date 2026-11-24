@@ -14,7 +14,7 @@ Run Claude Code with GitHub Copilot models through a local bridge. The bridge tr
 
 Use **Direct SDK** (recommended) with your own Copilot account and your organization's model policy. Follow the quick start below. Choose [LiteLLM (optional)](#litellm-optional) only if you need a LiteLLM gateway in front of this bridge.
 
-Prefer screenshots and a recorded walkthrough? Open the Korean step-by-step guides straight in your browser: [① Direct SDK](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_DIRECT_KO.html) and [② through LiteLLM](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_LITELLM_KO.html). Each is one HTML page with a sibling MP4, served from GitHub Pages; the sources live in [`docs/hands-on/`](docs/hands-on/).
+Prefer screenshots and a recorded walkthrough? Open the step-by-step guides straight in your browser: [① Direct SDK](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_DIRECT_EN.html) and [② through LiteLLM](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_LITELLM_EN.html). Each is one HTML page with a sibling MP4, served from GitHub Pages; the sources live in [`docs/hands-on/`](docs/hands-on/). Korean versions: [① Direct SDK](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_DIRECT_KO.html) · [② through LiteLLM](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_LITELLM_KO.html).
 
 ## Quick start (Direct SDK)
 
@@ -350,5 +350,5 @@ Plain `npm run verify` selects the full matrix with one model worker, `--timeout
 | Whether a specific Claude Code feature works | [Compatibility](docs/COMPATIBILITY.md) |
 | Latest recorded core-scenario results by model | [Verification results](docs/VERIFICATION.md) |
 | How to use or run a LiteLLM gateway | [LiteLLM guide](docs/LITELLM.md) |
-| Step-by-step with screenshots and video (Korean) | [① Direct SDK](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_DIRECT_KO.html) · [② through LiteLLM](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_LITELLM_KO.html) |
+| Step-by-step with screenshots and video | [① Direct SDK](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_DIRECT_EN.html) · [② through LiteLLM](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_LITELLM_EN.html) · in Korean: [①](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_DIRECT_KO.html) · [②](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_LITELLM_KO.html) |
 | Every environment variable and its default | [`.env.example`](.env.example) |

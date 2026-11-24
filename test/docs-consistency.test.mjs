@@ -146,12 +146,14 @@ test("every relative link and anchor in README and docs resolves", () => {
 });
 
 // docs/hands-on/ is the root of the GitHub Pages site (.github/workflows/pages.yml),
-// so a missing sibling file or an unlisted guide breaks the published pages.
-test("the published hands-on pages link only to files in their folder and index.html lists every guide", () => {
+// so a missing sibling file or a guide its landing page does not list breaks the published pages.
+// Every language has a landing page (index.html for Korean, index_EN.html for English) that also links to the other one.
+test("the published hands-on pages link only to files in their folder and each landing page lists its guides", () => {
   const dir = path.join(root, "docs/hands-on");
+  const landing = { KO: "index.html", EN: "index_EN.html" };
   const pages = fs.readdirSync(dir).filter((name) => name.endsWith(".html"));
-  const guides = pages.filter((name) => name !== "index.html");
-  assert.ok(guides.length >= 2, "guides found");
+  const guides = pages.filter((name) => /^HANDS_ON_.+_(?:KO|EN)\.html$/.test(name));
+  assert.ok(guides.length >= 4, "guides found");
   const problems = [];
   for (const page of pages) {
     const html = fs.readFileSync(path.join(dir, page), "utf8");
@@ -160,9 +162,13 @@ test("the published hands-on pages link only to files in their folder and index.
       if (!fs.existsSync(path.join(dir, decodeURIComponent(target.split("#")[0])))) problems.push(`${page}: missing ${target}`);
     }
   }
-  const index = fs.readFileSync(path.join(dir, "index.html"), "utf8");
-  for (const guide of guides) {
-    if (!index.includes(`href="${guide}"`)) problems.push(`index.html: no link to ${guide}`);
+  for (const [lang, file] of Object.entries(landing)) {
+    const html = fs.readFileSync(path.join(dir, file), "utf8");
+    for (const guide of guides.filter((name) => name.endsWith(`_${lang}.html`))) {
+      if (!html.includes(`href="${guide}"`)) problems.push(`${file}: no link to ${guide}`);
+    }
+    const other = Object.values(landing).find((name) => name !== file);
+    if (!html.includes(`href="${other}"`)) problems.push(`${file}: no link to ${other}`);
   }
   assert.deepEqual(problems, []);
 });
