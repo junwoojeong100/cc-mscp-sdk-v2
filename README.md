@@ -12,6 +12,8 @@ Run Claude Code with GitHub Copilot models through a local bridge. The bridge tr
 
 Use **Direct SDK** (recommended) with your own Copilot account and your organization's model policy. Follow the quick start below. Choose [LiteLLM (optional)](#litellm-optional) only if you need a LiteLLM gateway in front of this bridge.
 
+Prefer screenshots and a recorded walkthrough? The Korean step-by-step guides, [① Direct SDK](docs/hands-on/HANDS_ON_DIRECT_KO.html) and [② through LiteLLM](docs/hands-on/HANDS_ON_LITELLM_KO.html), are one HTML page each with a sibling MP4. Clone the repository and open the page in a browser.
+
 ## Quick start (Direct SDK)
 
 ### Requirements
@@ -346,4 +348,5 @@ Plain `npm run verify` selects the full matrix with one model worker, `--timeout
 | Whether a specific Claude Code feature works | [Compatibility](docs/COMPATIBILITY.md) |
 | Latest recorded core-scenario results by model | [Verification results](docs/VERIFICATION.md) |
 | How to use or run a LiteLLM gateway | [LiteLLM guide](docs/LITELLM.md) |
+| Step-by-step with screenshots and video (Korean) | [① Direct SDK](docs/hands-on/HANDS_ON_DIRECT_KO.html) · [② through LiteLLM](docs/hands-on/HANDS_ON_LITELLM_KO.html) |
 | Every environment variable and its default | [`.env.example`](.env.example) |
