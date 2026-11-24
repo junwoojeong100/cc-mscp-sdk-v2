@@ -145,6 +145,28 @@ test("every relative link and anchor in README and docs resolves", () => {
   assert.deepEqual(problems, []);
 });
 
+// docs/hands-on/ is the root of the GitHub Pages site (.github/workflows/pages.yml),
+// so a missing sibling file or an unlisted guide breaks the published pages.
+test("the published hands-on pages link only to files in their folder and index.html lists every guide", () => {
+  const dir = path.join(root, "docs/hands-on");
+  const pages = fs.readdirSync(dir).filter((name) => name.endsWith(".html"));
+  const guides = pages.filter((name) => name !== "index.html");
+  assert.ok(guides.length >= 2, "guides found");
+  const problems = [];
+  for (const page of pages) {
+    const html = fs.readFileSync(path.join(dir, page), "utf8");
+    for (const [, target] of html.matchAll(/\b(?:href|src)="([^"]+)"/g)) {
+      if (/^(?:[a-z][a-z0-9+.-]*:|#)/i.test(target)) continue;
+      if (!fs.existsSync(path.join(dir, decodeURIComponent(target.split("#")[0])))) problems.push(`${page}: missing ${target}`);
+    }
+  }
+  const index = fs.readFileSync(path.join(dir, "index.html"), "utf8");
+  for (const guide of guides) {
+    if (!index.includes(`href="${guide}"`)) problems.push(`index.html: no link to ${guide}`);
+  }
+  assert.deepEqual(problems, []);
+});
+
 // Lines inside fenced code blocks.
 const code = (markdown) => {
   let fenced = false;
