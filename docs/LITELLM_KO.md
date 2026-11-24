@@ -36,8 +36,8 @@ Linux(런처가 bash 스크립트입니다), Claude Code, Node.js, Git, `curl`�
 넣으세요. 저장소를 이미 복제했다면 다시 복제하지 말고 해당 저장소 루트로 이동하세요.
 
 ```bash
-git clone https://github.com/junwoojeong100/claude-code-ghcp-sdk.git
-cd claude-code-ghcp-sdk
+git clone https://github.com/junwoojeong100/cc-mscp-sdk-v2.git
+cd cc-mscp-sdk-v2
 
 export LITELLM_BASE_URL="https://litellm.example.com"
 export LITELLM_API_KEY="<받은 가상 키>"

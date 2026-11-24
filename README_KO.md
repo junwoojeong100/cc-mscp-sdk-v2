@@ -4,6 +4,8 @@
 
 로컬 브리지를 통해 Claude Code에서 GitHub Copilot 모델을 사용합니다. 브리지는 Anthropic Messages API 요청을 Microsoft Copilot SDK(`@microsoft/copilot-sdk`, 2.0.0으로 고정. 이전 이름은 GitHub Copilot SDK, `@github/copilot-sdk`)로 전달하며, Claude Code의 UI, 로컬 도구 실행, 권한, 훅, MCP 서버, 스킬은 그대로 둡니다.
 
+> **계보:** 이 저장소는 [claude-code-ghcp-sdk](https://github.com/junwoojeong100/claude-code-ghcp-sdk)를 이어 Microsoft Copilot SDK 2.0.0 기반으로 만든 것이며, 기존 히스토리를 그대로 담고 있습니다.
+
 **비공식 통합입니다.** Anthropic은 Claude가 아닌 모델을 게이트웨이로 연결하는 방식을 지원하지 않으며, 이 조합은 Anthropic도 GitHub도 지원하지 않습니다. 자세한 내용은 [되는 것과 안 되는 것](#되는-것과-안-되는-것)을 참고하세요.
 
 [빠른 시작](#빠른-시작-direct-sdk) · [기록된 검증 결과](docs/VERIFICATION_KO.md) · [진단 가이드](docs/DIAGNOSTICS_KO.md#증상별-첫-조치)
@@ -28,12 +30,12 @@
 ### 1. 설치
 
 ```bash
-git clone https://github.com/junwoojeong100/claude-code-ghcp-sdk.git
-cd claude-code-ghcp-sdk
+git clone https://github.com/junwoojeong100/cc-mscp-sdk-v2.git
+cd cc-mscp-sdk-v2
 npm ci
 ```
 
-설치와 점검은 이 체크아웃에서, 실제 작업은 자신의 프로젝트에서 합니다. 아래 예시의 `/absolute/path/to/claude-code-ghcp-sdk`는 이 체크아웃의 절대 경로(여기서 `pwd`로 확인)로, `/path/to/your-project`는 작업할 프로젝트 디렉터리로 바꾸세요.
+설치와 점검은 이 체크아웃에서, 실제 작업은 자신의 프로젝트에서 합니다. 아래 예시의 `/absolute/path/to/cc-mscp-sdk-v2`는 이 체크아웃의 절대 경로(여기서 `pwd`로 확인)로, `/path/to/your-project`는 작업할 프로젝트 디렉터리로 바꾸세요.
 
 ### 2. GitHub Copilot 로그인
 
@@ -69,7 +71,7 @@ Anthropic API 키는 필요하지 않습니다.
 
 ```bash
 cd "/path/to/your-project"
-"/absolute/path/to/claude-code-ghcp-sdk/bin/claude-ghcp"
+"/absolute/path/to/cc-mscp-sdk-v2/bin/claude-ghcp"
 ```
 
 시작 모델의 우선순위는 `--ghcp-model` → export된 `GHCP_MODEL` → `claude-sonnet-5`(Claude Sonnet 5)입니다.
@@ -80,14 +82,14 @@ cd "/path/to/your-project"
 
 ```bash
 cd "/path/to/your-project"
-"/absolute/path/to/claude-code-ghcp-sdk/bin/claude-ghcp" --ghcp-model gpt-6-sol
+"/absolute/path/to/cc-mscp-sdk-v2/bin/claude-ghcp" --ghcp-model gpt-6-sol
 ```
 
 또는 프롬프트 하나에 답하고 종료하는 print 모드(`-p`)를 쓰세요.
 
 ```bash
 cd "/path/to/your-project"
-"/absolute/path/to/claude-code-ghcp-sdk/bin/claude-ghcp" --ghcp-model claude-haiku-4.5 -p "이 저장소의 구조를 설명해줘"
+"/absolute/path/to/cc-mscp-sdk-v2/bin/claude-ghcp" --ghcp-model claude-haiku-4.5 -p "이 저장소의 구조를 설명해줘"
 ```
 
 Claude Code 안에서는 `/model`로 [모델](#모델) 표의 6개 모델 사이를 오갈 수 있습니다.
@@ -97,13 +99,13 @@ Claude Code 안에서는 `/model`로 [모델](#모델) 표의 6개 모델 사이
 위의 절대 경로는 어느 디렉터리에서든 쓸 수 있습니다. **체크아웃의 `bin`을 PATH 앞에 추가하면 기존 `claude` 대신 Direct SDK 런처가 실행됩니다.** Zsh에서 이 방식을 쓰려면 다음을 실행하세요.
 
 ```bash
-cd "/absolute/path/to/claude-code-ghcp-sdk"
+cd "/absolute/path/to/cc-mscp-sdk-v2"
 echo "export PATH=\"$PWD/bin:\$PATH\"" >> ~/.zshrc
 exec zsh
 command -v claude
 ```
 
-마지막 명령은 `<clone-path>/claude-code-ghcp-sdk/bin/claude`를 출력해야 합니다. 다른 셸은 같은 export를 그 셸의 설정 파일에 넣으세요. 원래 공급자로 Claude Code를 실행하려면 `claude-current`를 쓰세요. `export GHCP_MODEL=claude-haiku-4.5`는 `--ghcp-model`을 주지 않았을 때의 시작 모델을 바꿉니다.
+마지막 명령은 `<clone-path>/cc-mscp-sdk-v2/bin/claude`를 출력해야 합니다. 다른 셸은 같은 export를 그 셸의 설정 파일에 넣으세요. 원래 공급자로 Claude Code를 실행하려면 `claude-current`를 쓰세요. `export GHCP_MODEL=claude-haiku-4.5`는 `--ghcp-model`을 주지 않았을 때의 시작 모델을 바꿉니다.
 
 다른 방법은 체크아웃에서 `npm link`를 실행하는 것입니다. npm의 전역 bin 디렉터리가 PATH에 있어야 하며, `claude-ghcp`, `claude-current` 등 패키지 명령을 등록하지만 **`claude`는 등록하지 않습니다.** 런처는 심볼릭 링크를 따라가 이 체크아웃을 찾습니다. 두 설정을 되돌리는 방법은 [선택한 명령 설정 되돌리기](#선택한-명령-설정-되돌리기)를 참고하세요.
 
@@ -138,12 +140,12 @@ Claude Opus 5.5, Sonnet 5, Haiku 4.5가 아닌 모델(예: GPT-6 모델)로 시�
 
 대화형 세션, `--background`, `/background`로 넘긴 세션, `agents` 화면은 루프백 브리지 하나를 함께 씁니다(상주 브리지, 영문 문서의 *persistent bridge*). Claude Code가 끝나도 계속 실행되므로 백그라운드 작업이 이어집니다. print 모드(`-p`)는 종료 시 함께 멈추는 전용 브리지를 쓰지만, `--background`나 `agents`와 함께 쓰면 상주 브리지를 씁니다.
 
-어느 디렉터리에서든 `"/absolute/path/to/claude-code-ghcp-sdk/bin/claude-ghcp-status"`로 상태를 확인할 수 있습니다. PID와 포트, 처음 시작할 때의 모델, 아직 실행 중인 교체된 브리지 수(`retired`)를 보여 줍니다.
+어느 디렉터리에서든 `"/absolute/path/to/cc-mscp-sdk-v2/bin/claude-ghcp-status"`로 상태를 확인할 수 있습니다. PID와 포트, 처음 시작할 때의 모델, 아직 실행 중인 교체된 브리지 수(`retired`)를 보여 줍니다.
 
 **중지하기 전에 모든 세션과 백그라운드 작업을 마치고 필요한 로그를 복사해 두세요.** `claude-ghcp-stop`은 공유 브리지와 교체된 브리지를 모두 멈춰, 이를 쓰는 모든 세션과 `/background` 작업을 끊습니다. 현재 브리지 중지에 실패해도 `bridge.log`와 브리지의 실행별 설정 파일을 지웁니다. 사용자 설정, 저장된 대화, `claude-litellm` 설정 파일은 지우지 않습니다. LiteLLM 설정 파일에는 키가 남을 수 있으므로 [사용자 설정은 건드리지 않습니다](#사용자-설정은-건드리지-않습니다)를 확인하세요.
 
 ```bash
-"/absolute/path/to/claude-code-ghcp-sdk/bin/claude-ghcp-stop"
+"/absolute/path/to/cc-mscp-sdk-v2/bin/claude-ghcp-stop"
 ```
 
 브리지 파일은 `$GHCP_DAEMON_DIR`가 있으면 그곳에, 없으면 macOS에서는 `~/Library/Caches/claude-code-ghcp-sdk`, Linux에서는 `${XDG_CACHE_HOME:-~/.cache}/claude-code-ghcp-sdk`에 둡니다. 교체·보관 규칙은 [아키텍처](docs/ARCHITECTURE_KO.md#상주-브리지와-교체), 응답하지 않는 브리지는 [진단 가이드](docs/DIAGNOSTICS_KO.md#증상별-첫-조치)를 참고하세요.
@@ -153,7 +155,7 @@ Claude Opus 5.5, Sonnet 5, Haiku 4.5가 아닌 모델(예: GPT-6 모델)로 시�
 의존성을 바꾸기 전에 진행 중인 작업을 마치세요. 체크아웃에서 `git status --short`를 확인하고 로컬 변경이 있으면 먼저 보존하세요. 깨끗한 체크아웃에서 업데이트하고 잠금 파일 기준으로 의존성을 설치합니다.
 
 ```bash
-cd "/absolute/path/to/claude-code-ghcp-sdk"
+cd "/absolute/path/to/cc-mscp-sdk-v2"
 git pull --ff-only
 npm ci
 ```
@@ -164,7 +166,7 @@ npm ci
 
 ```bash
 cd "/path/to/your-project"
-"/absolute/path/to/claude-code-ghcp-sdk/bin/claude-ghcp" --ghcp-model gpt-6-astra --continue
+"/absolute/path/to/cc-mscp-sdk-v2/bin/claude-ghcp" --ghcp-model gpt-6-astra --continue
 ```
 
 저장된 대화를 고르려면 `--continue` 대신 `--resume`을 쓰세요. 재개해도 Claude Code의 대화 기록과 사용자 설정은 보존됩니다. 바뀐 `/model` 목록을 불러오려면 세션을 다시 시작하세요. 이것이 실행 중인 브리지에 캐시된 SDK 카탈로그를 갱신하지는 않습니다.
@@ -206,7 +208,7 @@ export LITELLM_BASE_URL="https://litellm.example.com"
 export LITELLM_API_KEY="<scoped-virtual-key>"
 export LITELLM_MODEL="claude-sonnet-5"
 cd "/path/to/your-project"
-"/absolute/path/to/claude-code-ghcp-sdk/bin/claude-litellm"
+"/absolute/path/to/cc-mscp-sdk-v2/bin/claude-litellm"
 ```
 
 연결 방법, 게이트웨이 운영, Direct SDK와 다른 점은 [LiteLLM 가이드](docs/LITELLM_KO.md)를 참고하세요.
@@ -327,7 +329,7 @@ print 모드 실행(`--background` 없는 `-p`)은 끝날 때 이 파일을 지�
 체크아웃에서 오프라인 확인부터 시작하세요. 두 검사 모두 모델을 호출하지 않습니다.
 
 ```bash
-cd "/absolute/path/to/claude-code-ghcp-sdk"
+cd "/absolute/path/to/cc-mscp-sdk-v2"
 npm test
 npm run verify -- --dry-run
 ```

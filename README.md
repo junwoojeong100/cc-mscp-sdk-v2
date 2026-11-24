@@ -4,6 +4,8 @@
 
 Run Claude Code with GitHub Copilot models through a local bridge. The bridge translates Anthropic Messages API requests through the Microsoft Copilot SDK (`@microsoft/copilot-sdk`, pinned to 2.0.0; formerly the GitHub Copilot SDK, `@github/copilot-sdk`); Claude Code keeps its UI, local tool execution, permissions, hooks, MCP servers and skills.
 
+> **Lineage:** this repository continues [claude-code-ghcp-sdk](https://github.com/junwoojeong100/claude-code-ghcp-sdk) on the Microsoft Copilot SDK 2.0.0 and keeps its full history.
+
 **This is an unofficial integration.** Anthropic does not support routing non-Claude models through a gateway, and neither Anthropic nor GitHub supports this combination. See [What works and what does not](#what-works-and-what-does-not).
 
 [Quick start](#quick-start-direct-sdk) · [Recorded results](docs/VERIFICATION.md) · [Diagnostics](docs/DIAGNOSTICS.md#start-with-the-symptom)
@@ -28,12 +30,12 @@ Prefer screenshots and a recorded walkthrough? The Korean step-by-step guides, [
 ### 1. Install
 
 ```bash
-git clone https://github.com/junwoojeong100/claude-code-ghcp-sdk.git
-cd claude-code-ghcp-sdk
+git clone https://github.com/junwoojeong100/cc-mscp-sdk-v2.git
+cd cc-mscp-sdk-v2
 npm ci
 ```
 
-Installation and checks run in this checkout; your actual work runs in your own project. In the examples below, replace `/absolute/path/to/claude-code-ghcp-sdk` with this checkout's absolute path (`pwd` here), and `/path/to/your-project` with your project directory.
+Installation and checks run in this checkout; your actual work runs in your own project. In the examples below, replace `/absolute/path/to/cc-mscp-sdk-v2` with this checkout's absolute path (`pwd` here), and `/path/to/your-project` with your project directory.
 
 ### 2. Sign in to GitHub Copilot
 
@@ -69,7 +71,7 @@ Move to the project you want to work on, then call the launcher by its absolute 
 
 ```bash
 cd "/path/to/your-project"
-"/absolute/path/to/claude-code-ghcp-sdk/bin/claude-ghcp"
+"/absolute/path/to/cc-mscp-sdk-v2/bin/claude-ghcp"
 ```
 
 The launch model is chosen in this order: `--ghcp-model` → exported `GHCP_MODEL` → `claude-sonnet-5` (Claude Sonnet 5).
@@ -80,14 +82,14 @@ Prompts use your Copilot allowance. In Claude Code, ask `Reply with OK`. A reply
 
 ```bash
 cd "/path/to/your-project"
-"/absolute/path/to/claude-code-ghcp-sdk/bin/claude-ghcp" --ghcp-model gpt-6-sol
+"/absolute/path/to/cc-mscp-sdk-v2/bin/claude-ghcp" --ghcp-model gpt-6-sol
 ```
 
 Or use print mode (`-p`), which answers one prompt and exits:
 
 ```bash
 cd "/path/to/your-project"
-"/absolute/path/to/claude-code-ghcp-sdk/bin/claude-ghcp" --ghcp-model claude-haiku-4.5 -p "Describe the structure of this repository"
+"/absolute/path/to/cc-mscp-sdk-v2/bin/claude-ghcp" --ghcp-model claude-haiku-4.5 -p "Describe the structure of this repository"
 ```
 
 Inside Claude Code, `/model` switches between the six models listed in [Models](#models).
@@ -97,13 +99,13 @@ Inside Claude Code, `/model` switches between the six models listed in [Models](
 The absolute paths above already work from any directory. **Prepending this checkout's `bin` to PATH makes `claude` run Direct SDK instead of your existing `claude` command.** To opt in with Zsh:
 
 ```bash
-cd "/absolute/path/to/claude-code-ghcp-sdk"
+cd "/absolute/path/to/cc-mscp-sdk-v2"
 echo "export PATH=\"$PWD/bin:\$PATH\"" >> ~/.zshrc
 exec zsh
 command -v claude
 ```
 
-The last command should print `<clone-path>/claude-code-ghcp-sdk/bin/claude`. For other shells, add the same export to that shell's configuration file. Use `claude-current` to run Claude Code with its original provider. `export GHCP_MODEL=claude-haiku-4.5` changes the launch default unless you pass `--ghcp-model`.
+The last command should print `<clone-path>/cc-mscp-sdk-v2/bin/claude`. For other shells, add the same export to that shell's configuration file. Use `claude-current` to run Claude Code with its original provider. `export GHCP_MODEL=claude-haiku-4.5` changes the launch default unless you pass `--ghcp-model`.
 
 Alternatively, run `npm link` from the checkout, with npm's global bin directory on PATH. It registers `claude-ghcp`, `claude-current` and the other package commands, **not `claude`**. The launchers follow symlinks back to this checkout. To reverse either setup, see [Undo the optional command setup](#undo-the-optional-command-setup).
 
@@ -138,12 +140,12 @@ How the windows, input limits and effort values are set: [Architecture](docs/ARC
 
 Interactive sessions, `--background`, sessions handed off with `/background` and the `agents` view share one loopback bridge (the *persistent bridge*). It stays running after Claude Code exits so background jobs can continue. Print mode (`-p`) uses a private bridge that stops on exit, unless combined with `--background` or `agents`.
 
-Check it from any directory with `"/absolute/path/to/claude-code-ghcp-sdk/bin/claude-ghcp-status"`. The report shows the PID, port, model the bridge started with and number of replaced bridges still running (`retired`).
+Check it from any directory with `"/absolute/path/to/cc-mscp-sdk-v2/bin/claude-ghcp-status"`. The report shows the PID, port, model the bridge started with and number of replaced bridges still running (`retired`).
 
 **Before stopping, finish all sessions and background jobs and copy any logs you need.** `claude-ghcp-stop` stops the shared bridge and every replaced bridge, interrupting all sessions and `/background` jobs that use them. It deletes `bridge.log` and the bridge's per-launch settings files, even if stopping the current bridge fails. It does not delete user settings, saved conversations or the `claude-litellm` settings files, which can retain your key; see [Your settings are left alone](#your-settings-are-left-alone).
 
 ```bash
-"/absolute/path/to/claude-code-ghcp-sdk/bin/claude-ghcp-stop"
+"/absolute/path/to/cc-mscp-sdk-v2/bin/claude-ghcp-stop"
 ```
 
 Bridge files live in `$GHCP_DAEMON_DIR` if set, otherwise in `~/Library/Caches/claude-code-ghcp-sdk` on macOS or `${XDG_CACHE_HOME:-~/.cache}/claude-code-ghcp-sdk` on Linux. For replacement and retention rules, see [Architecture](docs/ARCHITECTURE.md#persistent-bridge-and-retirement); for an unresponsive bridge, see [Diagnostics](docs/DIAGNOSTICS.md#start-with-the-symptom).
@@ -153,7 +155,7 @@ Bridge files live in `$GHCP_DAEMON_DIR` if set, otherwise in `~/Library/Caches/c
 Finish active jobs before changing dependencies. Check `git status --short` in the checkout and preserve any local changes first. With a clean checkout, update and install the locked dependencies:
 
 ```bash
-cd "/absolute/path/to/claude-code-ghcp-sdk"
+cd "/absolute/path/to/cc-mscp-sdk-v2"
 git pull --ff-only
 npm ci
 ```
@@ -164,7 +166,7 @@ To move a conversation onto the updated code, exit Claude Code and resume from t
 
 ```bash
 cd "/path/to/your-project"
-"/absolute/path/to/claude-code-ghcp-sdk/bin/claude-ghcp" --ghcp-model gpt-6-astra --continue
+"/absolute/path/to/cc-mscp-sdk-v2/bin/claude-ghcp" --ghcp-model gpt-6-astra --continue
 ```
 
 Use `--resume` instead of `--continue` to choose a saved conversation. Resuming preserves Claude Code's transcripts and user settings. Restart a session to load a changed `/model` list; this does not refresh the SDK catalogue cached by an already-running bridge.
@@ -206,7 +208,7 @@ export LITELLM_BASE_URL="https://litellm.example.com"
 export LITELLM_API_KEY="<scoped-virtual-key>"
 export LITELLM_MODEL="claude-sonnet-5"
 cd "/path/to/your-project"
-"/absolute/path/to/claude-code-ghcp-sdk/bin/claude-litellm"
+"/absolute/path/to/cc-mscp-sdk-v2/bin/claude-litellm"
 ```
 
 To connect, run a gateway, or look up what differs from Direct SDK, see the [LiteLLM guide](docs/LITELLM.md).
@@ -327,7 +329,7 @@ Feature by feature: [Compatibility](docs/COMPATIBILITY.md#feature-lookup).
 Start with offline checks in the checkout. Neither check calls a model:
 
 ```bash
-cd "/absolute/path/to/claude-code-ghcp-sdk"
+cd "/absolute/path/to/cc-mscp-sdk-v2"
 npm test
 npm run verify -- --dry-run
 ```

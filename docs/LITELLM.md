@@ -39,8 +39,8 @@ key in place of the examples. If you already cloned this repository, enter its r
 of cloning again.
 
 ```bash
-git clone https://github.com/junwoojeong100/claude-code-ghcp-sdk.git
-cd claude-code-ghcp-sdk
+git clone https://github.com/junwoojeong100/cc-mscp-sdk-v2.git
+cd cc-mscp-sdk-v2
 
 export LITELLM_BASE_URL="https://litellm.example.com"
 export LITELLM_API_KEY="<your virtual key>"

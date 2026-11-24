@@ -725,7 +725,7 @@ printf 'Authorization: Bearer %s\n' "$LITELLM_API_KEY" |
 <section class="panel" id="client-only" data-nav="기존 게이트웨이에 연결">
   <h2 class="section-title">이미 운영 중인 게이트웨이에 연결만 하려면</h2>
   <p class="section-sub">다른 사람이 운영하는 게이트웨이의 URL과 키를 받았다면 <b>터미널 B 쪽만</b> 하면 됩니다. 브리지는 운영자의 컴퓨터에서 실행되므로 <code>npm ci</code>와 <code>copilot login</code>은 필요 없습니다.</p>
-  <div class="code"><div class="cap"><b>터미널 B</b><button class="copy" type="button">복사</button></div><pre><code>git clone https://github.com/junwoojeong100/cc-mscp-sdk.git
+  <div class="code"><div class="cap"><b>터미널 B</b><button class="copy" type="button">복사</button></div><pre><code>git clone https://github.com/junwoojeong100/cc-mscp-sdk-v2.git cc-mscp-sdk
 cd cc-mscp-sdk
 
 export LITELLM_BASE_URL="https://litellm.example.com"
@@ -744,7 +744,7 @@ export LITELLM_MODEL="claude-sonnet-5"
 
 <section class="panel" id="trouble" data-nav="문제 해결 표">
   <h2 class="section-title">문제 해결 한눈에 보기</h2>
-  <p class="section-sub">LiteLLM 경로에서 자주 만나는 증상입니다. 전체 목록은 <a href="https://github.com/junwoojeong100/cc-mscp-sdk/blob/main/docs/LITELLM_KO.md#문제-해결">LiteLLM 가이드</a>에 있습니다.</p>
+  <p class="section-sub">LiteLLM 경로에서 자주 만나는 증상입니다. 전체 목록은 <a href="https://github.com/junwoojeong100/cc-mscp-sdk-v2/blob/main/docs/LITELLM_KO.md#문제-해결">LiteLLM 가이드</a>에 있습니다.</p>
   <div class="tablewrap"><table>
     <thead><tr><th>증상 / 메시지</th><th>원인</th><th>해결</th></tr></thead>
     <tbody>
@@ -775,7 +775,7 @@ export LITELLM_MODEL="claude-sonnet-5"
     <li>LiteLLM이 브리지의 <code>429</code>/<code>529</code>를 그대로 넘기는지, 먼저 재시도하는지도 검증하지 않았습니다.</li>
   </ul>
   <p class="meta">확인 환경(촬영일 2026-11-25): macOS · Node.js v22.16.0 · Claude Code 2.1.331 · <code>@microsoft/copilot-sdk</code> 2.0.0(런타임 1.0.113) · LiteLLM v1.97.0</p>
-  <p class="meta">더 읽기: <a href="https://github.com/junwoojeong100/cc-mscp-sdk/blob/main/docs/LITELLM_KO.md">LiteLLM 가이드(전체)</a> · <a href="https://github.com/junwoojeong100/cc-mscp-sdk/blob/main/README_KO.md">README</a> · <a href="https://github.com/junwoojeong100/cc-mscp-sdk/blob/main/docs/ARCHITECTURE_KO.md">아키텍처</a> · <a href="HANDS_ON_DIRECT_KO.html">실습 가이드 ① Direct (LiteLLM 없음)</a> · <a href="https://github.com/microsoft/copilot-sdk">Microsoft Copilot SDK</a></p>
+  <p class="meta">더 읽기: <a href="https://github.com/junwoojeong100/cc-mscp-sdk-v2/blob/main/docs/LITELLM_KO.md">LiteLLM 가이드(전체)</a> · <a href="https://github.com/junwoojeong100/cc-mscp-sdk-v2/blob/main/README_KO.md">README</a> · <a href="https://github.com/junwoojeong100/cc-mscp-sdk-v2/blob/main/docs/ARCHITECTURE_KO.md">아키텍처</a> · <a href="HANDS_ON_DIRECT_KO.html">실습 가이드 ① Direct (LiteLLM 없음)</a> · <a href="https://github.com/microsoft/copilot-sdk">Microsoft Copilot SDK</a></p>
 </section>
 
   </main>
