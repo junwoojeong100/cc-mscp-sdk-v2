@@ -14,7 +14,7 @@
 
 내 Copilot 계정과 조직의 모델 정책을 그대로 쓰는 **Direct SDK를 권장합니다.** 아래 빠른 시작을 따라 하세요. 이 브리지 앞에 LiteLLM 게이트웨이가 필요한 경우에만 [LiteLLM (선택)](#litellm-선택)을 고르세요.
 
-화면 캡처와 녹화 영상으로 따라 하고 싶다면 [실습 가이드 ① Direct SDK](docs/hands-on/HANDS_ON_DIRECT_KO.html)와 [실습 가이드 ② LiteLLM 경유](docs/hands-on/HANDS_ON_LITELLM_KO.html)를 여세요. 각각 HTML 한 장과 같은 폴더의 MP4 영상으로 이루어져 있습니다. 저장소를 클론한 뒤 브라우저로 여세요.
+화면 캡처와 녹화 영상으로 따라 하고 싶다면 [실습 가이드 ① Direct SDK](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_DIRECT_KO.html)와 [실습 가이드 ② LiteLLM 경유](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_LITELLM_KO.html)를 브라우저에서 바로 여세요. 각각 HTML 한 장과 같은 폴더의 MP4 영상으로 이루어져 있으며 GitHub Pages로 제공합니다. 소스는 [`docs/hands-on/`](docs/hands-on/)에 있습니다.
 
 ## 빠른 시작 (Direct SDK)
 
@@ -350,5 +350,5 @@ npm run verify -- --dry-run
 | 특정 Claude Code 기능이 되는지 | [호환성](docs/COMPATIBILITY_KO.md) |
 | 마지막으로 기록한 핵심 시나리오의 모델별 결과 | [검증 결과](docs/VERIFICATION_KO.md) |
 | LiteLLM 게이트웨이 사용과 운영 | [LiteLLM 가이드](docs/LITELLM_KO.md) |
-| 화면 캡처와 영상으로 따라 하기 | [실습 가이드 ① Direct SDK](docs/hands-on/HANDS_ON_DIRECT_KO.html) · [실습 가이드 ② LiteLLM 경유](docs/hands-on/HANDS_ON_LITELLM_KO.html) |
+| 화면 캡처와 영상으로 따라 하기 | [실습 가이드 ① Direct SDK](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_DIRECT_KO.html) · [실습 가이드 ② LiteLLM 경유](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_LITELLM_KO.html) |
 | 모든 환경 변수와 기본값 | [`.env.example`](.env.example) |
