@@ -2,7 +2,7 @@
 
 > **언어 / Language:** [English](README.md) | 한국어
 
-로컬 브리지를 통해 Claude Code에서 GitHub Copilot 모델을 사용합니다. 브리지는 Anthropic Messages API 요청을 GitHub Copilot SDK(`@github/copilot-sdk`, 1.0.14로 고정)로 전달하며, Claude Code의 UI, 로컬 도구 실행, 권한, 훅, MCP 서버, 스킬은 그대로 둡니다.
+로컬 브리지를 통해 Claude Code에서 GitHub Copilot 모델을 사용합니다. 브리지는 Anthropic Messages API 요청을 Microsoft Copilot SDK(`@microsoft/copilot-sdk`, 2.0.0으로 고정. 이전 이름은 GitHub Copilot SDK, `@github/copilot-sdk`)로 전달하며, Claude Code의 UI, 로컬 도구 실행, 권한, 훅, MCP 서버, 스킬은 그대로 둡니다.
 
 **비공식 통합입니다.** Anthropic은 Claude가 아닌 모델을 게이트웨이로 연결하는 방식을 지원하지 않으며, 이 조합은 Anthropic도 GitHub도 지원하지 않습니다. 자세한 내용은 [되는 것과 안 되는 것](#되는-것과-안-되는-것)을 참고하세요.
 
@@ -238,7 +238,7 @@ cd "/path/to/your-project"
 | `GHCP_NATIVE_TOOL_SEARCH` | `0` | `1`이면 Claude Code 자체의 MCP 도구 검색을 켭니다. 기본값에서는 모든 도구를 전체 스키마로 보냅니다 |
 | `GHCP_DAEMON_DIR` | [백그라운드 브리지](#백그라운드-브리지) 참고 | 상주 브리지의 디렉터리. 상대 경로는 실행한 디렉터리를 기준으로 풉니다. `~`는 펼치지 않으므로 `~`로 시작하는 값은 거부합니다 |
 | `CLAUDE_CODE_BIN` | PATH에서 처음 찾은, 이 저장소의 런처가 아닌 `claude` | 런처가 실행하는 실제 Claude Code 실행 파일 |
-| `COPILOT_CLI_PATH` | 없음 | SDK에 들어 있는 런타임 대신 기존 Copilot CLI를 실행합니다. 다른 런타임은 검증하지 않았습니다 |
+| `COPILOT_CLI_PATH` | 없음 | SDK에 들어 있는 런타임 대신 기존 Copilot CLI를 실행합니다. CLI가 SDK 프로토콜 4를 지원해야 하며, 더 오래된 CLI는 `SDK protocol version mismatch`로 브리지를 멈춥니다. 다른 런타임은 검증하지 않았습니다 |
 | `MAX_BODY_BYTES`, `MAX_REPLAY_BYTES` | 각각 `268435456` (256 MiB) | 요청 본문과 재생하는 대화 기록의 최대 크기. 늘리면 메모리를 더 쓰지만 모델의 컨텍스트 창은 커지지 않습니다 |
 | `TURN_IDLE_TIMEOUT_MS`, `TURN_MAX_DURATION_MS` | `300000`, `1800000` | 턴 제한. [요청 한도와 타임아웃](#요청-한도와-타임아웃) 참고 |
 | `--litellm-base-url` / `LITELLM_BASE_URL` | 없음, 필수 | LiteLLM 게이트웨이 URL |

@@ -1,12 +1,10 @@
-import { CopilotClient } from "@github/copilot-sdk";
-
+import { createCopilotClient } from "./copilot-client.mjs";
 import { resolveCopilotHome } from "./copilot-home.mjs";
 import { adapterModels } from "./model-map.mjs";
 
 const json = process.argv.includes("--json");
 const all = process.argv.includes("--all");
-const client = new CopilotClient({
-  mode: "empty",
+const client = createCopilotClient({
   baseDirectory: resolveCopilotHome(process.env.COPILOT_HOME),
   logLevel: "error",
 });

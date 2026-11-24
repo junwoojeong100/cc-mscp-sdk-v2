@@ -35,8 +35,8 @@ class FakeSession {
     this.sessionId = config.sessionId;
     this.current = {
       modelId: config.model,
-      ...(config.reasoningEffort ? { reasoningEffort: config.reasoningEffort } : {}),
-      ...(config.contextTier ? { contextTier: config.contextTier } : {}),
+      ...(config.inference?.reasoningEffort ? { reasoningEffort: config.inference.reasoningEffort } : {}),
+      ...(config.inference?.contextTier ? { contextTier: config.inference.contextTier } : {}),
     };
     this.calls = calls;
     this.handlers = new Map();
@@ -153,8 +153,8 @@ test("nonconfigurable models record null applied effort and absent context witho
   const haiku = "claude-haiku-4.5";
   const { manager, client, events } = await fakeManager(t, { verifyObservation: true, models: [{ id: haiku }] });
   await manager.execute(request("high", haiku), headers, ids);
-  assert.equal(Object.hasOwn(client.created[0], "reasoningEffort"), false);
-  assert.equal(Object.hasOwn(client.created[0], "contextTier"), false);
+  assert.equal(Object.hasOwn(client.created[0].inference ?? {}, "reasoningEffort"), false);
+  assert.equal(Object.hasOwn(client.created[0].inference ?? {}, "contextTier"), false);
   const observed = events.find((event) => event.event === "bridge.verify_model_state");
   assert.equal(observed.requestedEffort, "high");
   assert.equal(observed.appliedEffort, null);

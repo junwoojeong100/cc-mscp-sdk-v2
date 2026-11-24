@@ -83,7 +83,7 @@ function leftOutNames() {
 // The Copilot SDK reads this one itself; the entry tells users to leave it
 // unset. Checked against the SDK so the exemption lapses if the SDK drops it.
 const READ_BY_SDK = {
-  COPILOT_SDK_DEFAULT_CONNECTION: "node_modules/@github/copilot-sdk/dist/client.js",
+  COPILOT_SDK_DEFAULT_CONNECTION: "node_modules/@microsoft/copilot-sdk/dist/types.js",
 };
 
 test("everything .env.example leaves out on purpose is still read somewhere", () => {
@@ -99,7 +99,7 @@ test("everything .env.example leaves out on purpose is still read somewhere", ()
   ]);
   const stale = names.filter((name) => {
     if (READ_BY_SDK[name]) {
-      return !readFileSync(path.join(rootDir, READ_BY_SDK[name]), "utf8").includes(`"${name}"`);
+      return !readFileSync(path.join(rootDir, READ_BY_SDK[name]), "utf8").includes(name);
     }
     return !read.has(name);
   });

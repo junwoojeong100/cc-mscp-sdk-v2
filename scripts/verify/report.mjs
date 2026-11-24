@@ -250,7 +250,8 @@ export function renderReport(run, { lang = "en", markdown = false, evaluate = ev
   heading("Run metadata", "실행 메타데이터");
   line(`run: ${clean(reportPath(run.dir))}`);
   line(`Claude Code: ${clean(summary.claude?.version)} (${clean(summary.claude?.realpath ?? summary.claude?.bin)}); SHA256 ${clean(summary.claude?.sha256)}; end SHA256 ${clean(summary.claude?.endSha256)}`);
-  line(`Copilot SDK (@github/copilot-sdk) ${say("package version", "패키지 버전")}: ${clean(summary.copilotSdk?.version)}; ${say("npm package version recorded when the run started, not the Copilot runtime binary identity", "실행 시작 시 기록한 npm 패키지 버전이며 Copilot 런타임 실행 파일 식별 정보가 아닙니다")}`);
+  // Runs recorded before the package was renamed stored no package name.
+  line(`Copilot SDK (${clean(summary.copilotSdk?.name ?? "@github/copilot-sdk")}) ${say("package version", "패키지 버전")}: ${clean(summary.copilotSdk?.version)}; ${say("npm package version recorded when the run started, not the Copilot runtime binary identity", "실행 시작 시 기록한 npm 패키지 버전이며 Copilot 런타임 실행 파일 식별 정보가 아닙니다")}`);
   line(`Node: ${clean(summary.node)}; host: ${clean(summary.host?.platform)} ${clean(summary.host?.arch)} ${clean(summary.host?.release)}`);
   line(`start: ${clean(summary.startedAt)}; end: ${clean(summary.finishedAt)}; seconds: ${clean(summary.durationSeconds)}`);
   for (const stage of ["start", "end"]) {

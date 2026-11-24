@@ -2,7 +2,7 @@
 
 > **Language / 언어:** English | [한국어](README_KO.md)
 
-Run Claude Code with GitHub Copilot models through a local bridge. The bridge translates Anthropic Messages API requests through the GitHub Copilot SDK (`@github/copilot-sdk`, pinned to 1.0.14); Claude Code keeps its UI, local tool execution, permissions, hooks, MCP servers and skills.
+Run Claude Code with GitHub Copilot models through a local bridge. The bridge translates Anthropic Messages API requests through the Microsoft Copilot SDK (`@microsoft/copilot-sdk`, pinned to 2.0.0; formerly the GitHub Copilot SDK, `@github/copilot-sdk`); Claude Code keeps its UI, local tool execution, permissions, hooks, MCP servers and skills.
 
 **This is an unofficial integration.** Anthropic does not support routing non-Claude models through a gateway, and neither Anthropic nor GitHub supports this combination. See [What works and what does not](#what-works-and-what-does-not).
 
@@ -238,7 +238,7 @@ Command-line options win over environment variables. The launchers read exported
 | `GHCP_NATIVE_TOOL_SEARCH` | `0` | `1` turns on Claude Code's own MCP tool search. By default every tool is sent with its full schema |
 | `GHCP_DAEMON_DIR` | see [The background bridge](#the-background-bridge) | Directory of the background bridge. A relative path is resolved against the directory you launch from. A value starting with `~` is refused, because it is not expanded |
 | `CLAUDE_CODE_BIN` | the first `claude` on PATH that is not one of this repository's launchers | The real Claude Code executable the launchers run |
-| `COPILOT_CLI_PATH` | unset | Runs an existing Copilot CLI instead of the runtime bundled with the SDK. Another runtime is not verified |
+| `COPILOT_CLI_PATH` | unset | Runs an existing Copilot CLI instead of the runtime bundled with the SDK. The CLI must speak SDK protocol 4; an older one stops the bridge with `SDK protocol version mismatch`. Another runtime is not verified |
 | `MAX_BODY_BYTES`, `MAX_REPLAY_BYTES` | `268435456` (256 MiB) each | Largest request body and largest replayed history. Raising them uses more memory and does not enlarge a model's window |
 | `TURN_IDLE_TIMEOUT_MS`, `TURN_MAX_DURATION_MS` | `300000`, `1800000` | Turn limits; see [Rate limits and timeouts](#rate-limits-and-timeouts) |
 | `--litellm-base-url` / `LITELLM_BASE_URL` | none, required | LiteLLM gateway URL |

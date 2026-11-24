@@ -21,7 +21,7 @@ LiteLLM은 가상 키와 요청 로그를 더할 수 있습니다. 다만 가상
 [Direct 경로](../README_KO.md#빠른-시작-direct-sdk)를 쓰세요.
 
 ```text
-Claude Code 또는 다른 클라이언트 -> LiteLLM -> 브리지 (src/server.mjs) -> @github/copilot-sdk -> GitHub Copilot
+Claude Code 또는 다른 클라이언트 -> LiteLLM -> 브리지 (src/server.mjs) -> @microsoft/copilot-sdk -> GitHub Copilot
 ```
 
 LiteLLM은 `anthropic/*` 공급자로 브리지에 연결하며, `api_base`는 브리지 루트입니다.

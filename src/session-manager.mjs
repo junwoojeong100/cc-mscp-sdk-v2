@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 
-import { CopilotClient, defineTool } from "@github/copilot-sdk";
+import { defineTool } from "@microsoft/copilot-sdk";
 
 import {
   extractReasoningEffort,
@@ -8,6 +8,7 @@ import {
   extractTurnInput,
   serializeConversationTail,
 } from "./anthropic.mjs";
+import { createCopilotClient } from "./copilot-client.mjs";
 import {
   abortSession,
   deleteClientSession,
@@ -378,13 +379,7 @@ export class SessionManager {
     mcpDiscoveryTimeoutMs = MCP_DISCOVERY_TIMEOUT_MS,
     client,
   }) {
-    this.client =
-      client ??
-      new CopilotClient({
-        mode: "empty",
-        baseDirectory,
-        logLevel,
-      });
+    this.client = client ?? createCopilotClient({ baseDirectory, logLevel });
     this.preferredModel = preferredModel;
     this.turnTimeoutMs = turnTimeoutMs;
     this.maxTurnDurationMs = maxTurnDurationMs;
@@ -733,21 +728,29 @@ export class SessionManager {
     const creation = (async () => {
     const tools = createSdkTools(body.tools);
     const contextOptions = sdkContextOptionsFor(this.models.find((entry) => entry.id === model));
+    // setModel() keeps the flat contextTier/modelCapabilities names; sessions
+    // take them under `inference`.
+    const inference = {
+      ...(contextOptions.contextTier ? { contextTier: contextOptions.contextTier } : {}),
+      ...(contextOptions.modelCapabilities ? { capabilities: contextOptions.modelCapabilities } : {}),
+      ...(reasoningEffort ? { reasoningEffort } : {}),
+    };
     const sessionOptions = {
       model,
-      ...contextOptions,
-      availableTools: tools.map((tool) => `custom:${tool.name}`),
-      tools,
-      toolSearch: { enabled: false },
-      streaming: true,
-      infiniteSessions: { enabled: false },
+      ...(Object.keys(inference).length ? { inference } : {}),
+      tools: {
+        availableTools: tools.map((tool) => `custom:${tool.name}`),
+        definitions: tools,
+        search: { enabled: false },
+      },
+      events: { streaming: true },
+      state: { infiniteSessions: { enabled: false } },
       systemMessage: {
         mode: "replace",
         content: systemMessage,
       },
-      ...(reasoningEffort ? { reasoningEffort } : {}),
       ...(this.disabledMcpServers.length
-        ? { disabledMcpServers: [...this.disabledMcpServers] }
+        ? { mcp: { disabledServers: [...this.disabledMcpServers] } }
         : {}),
     };
 

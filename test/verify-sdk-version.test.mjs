@@ -24,11 +24,11 @@ function fixture(t) {
 }
 
 function installSdk(root, { entry = "dist/index.mjs", manifest = {} } = {}) {
-  const directory = path.join(root, "node_modules/@github/copilot-sdk");
+  const directory = path.join(root, "node_modules/@microsoft/copilot-sdk");
   const manifestPath = path.join(directory, "package.json");
   write(path.join(directory, entry), "throw new Error('SDK_ENTRY_MUST_NOT_EXECUTE');\n");
   write(manifestPath, JSON.stringify({
-    name: "@github/copilot-sdk", version: "9.8.7", type: "module",
+    name: "@microsoft/copilot-sdk", version: "9.8.7", type: "module",
     exports: { ".": `./${entry}` }, ...manifest,
   }));
   return { directory, manifestPath };
@@ -36,9 +36,9 @@ function installSdk(root, { entry = "dist/index.mjs", manifest = {} } = {}) {
 
 test("reads the installed SDK version, not the declared or locked version", (t) => {
   const { root, runtimeUrl } = fixture(t);
-  write(path.join(root, "package.json"), JSON.stringify({ dependencies: { "@github/copilot-sdk": "1.0.0" } }));
+  write(path.join(root, "package.json"), JSON.stringify({ dependencies: { "@microsoft/copilot-sdk": "1.0.0" } }));
   write(path.join(root, "package-lock.json"), JSON.stringify({
-    packages: { "node_modules/@github/copilot-sdk": { version: "2.0.0" } },
+    packages: { "node_modules/@microsoft/copilot-sdk": { version: "2.0.0" } },
   }));
   installSdk(root, { manifest: { version: "3.0.0-beta.1" } });
   assert.equal(readCopilotSdkVersion(runtimeUrl), "3.0.0-beta.1");
@@ -50,11 +50,11 @@ for (const entry of ["index.cjs", "dist/index.js", "build/cjs/public/index.cjs",
     const { directory } = installSdk(root, { entry });
     const nested = path.dirname(path.join(directory, entry));
     if (nested !== directory) {
-      write(path.join(nested, "package.json"), JSON.stringify({ name: "@github/copilot-sdk-build", version: "wrong" }));
+      write(path.join(nested, "package.json"), JSON.stringify({ name: "@microsoft/copilot-sdk-build", version: "wrong" }));
       const parent = path.dirname(nested);
       if (parent !== directory) write(path.join(parent, "package.json"), JSON.stringify({ type: "module" }));
     }
-    assert.throws(() => createRequire(runtimeUrl).resolve("@github/copilot-sdk/package.json"), {
+    assert.throws(() => createRequire(runtimeUrl).resolve("@microsoft/copilot-sdk/package.json"), {
       code: "ERR_PACKAGE_PATH_NOT_EXPORTED",
     });
     assert.equal(readCopilotSdkVersion(runtimeUrl), "9.8.7");

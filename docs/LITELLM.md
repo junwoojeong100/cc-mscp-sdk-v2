@@ -22,7 +22,7 @@ only need Claude Code on Copilot models, use the
 [Direct path](../README.md#quick-start-direct-sdk) instead.
 
 ```text
-Claude Code or another client -> LiteLLM -> bridge (src/server.mjs) -> @github/copilot-sdk -> GitHub Copilot
+Claude Code or another client -> LiteLLM -> bridge (src/server.mjs) -> @microsoft/copilot-sdk -> GitHub Copilot
 ```
 
 LiteLLM reaches the bridge through its `anthropic/*` provider, with `api_base` set to the

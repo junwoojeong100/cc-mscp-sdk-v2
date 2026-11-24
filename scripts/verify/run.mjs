@@ -9,7 +9,7 @@ import { isEntryPoint } from "../../src/entry-point.mjs";
 import { settingsFileState } from "../../src/settings-file-state.mjs";
 import { PRIMARY_MODELS, SCENARIOS, SCENARIO_IDS, switchSource } from "./scenarios.mjs";
 import { assessRun, createRunDefinition, FINGERPRINT_SCOPE, slotEvidenceProblems } from "./summary.mjs";
-import { readCopilotSdkVersion } from "./sdk-version.mjs";
+import { COPILOT_SDK_PACKAGE, readCopilotSdkVersion } from "./sdk-version.mjs";
 import { createTimeoutPolicy, parseTimeoutScale, runtimeTimeouts } from "./timeouts.mjs";
 import { ROOT_DIR, claudeVersion, resolveClaudeBin, seedConfigDir, startBridge, writeLaunchSettings } from "./bridge.mjs";
 
@@ -284,7 +284,7 @@ export async function main(argv = process.argv.slice(2), deps = {}) {
   const settingsPath = deps.userSettingsPath ?? path.join(os.homedir(), ".claude", "settings.json");
   const settingsBefore = settingsFileState(settingsPath);
   const summary = { ...definition, mode: "live", startedAt: new Date(startedAt).toISOString(), execution,
-    claude: {}, copilotSdk: { version: (deps.readCopilotSdkVersion ?? readCopilotSdkVersion)() }, node: process.version,
+    claude: {}, copilotSdk: { name: COPILOT_SDK_PACKAGE, version: (deps.readCopilotSdkVersion ?? readCopilotSdkVersion)() }, node: process.version,
     host: { platform: os.platform(), arch: os.arch(), release: os.release() }, actualTotal: 0, total: 0, gate: definition.expectedTotal, green: false,
     reference: (deps.captureReference ?? captureReference)(rootDir), provenance: { start: codeBefore, end: null, sources: codeBefore.sources },
     userSettings: { path: settingsPath, before: settingsBefore, after: null, intact: null }, slotsFile: "slots.jsonl" };

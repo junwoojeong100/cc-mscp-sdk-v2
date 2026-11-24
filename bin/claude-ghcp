@@ -132,7 +132,7 @@ done
 
 CLAUDE_BIN="$(resolve_claude_code_bin "$ROOT_DIR")"
 
-if [[ ! -d "$ROOT_DIR/node_modules/@github/copilot-sdk" ]]; then
+if [[ ! -d "$ROOT_DIR/node_modules/@microsoft/copilot-sdk" ]]; then
   echo "Dependencies are missing. Run: npm install --prefix \"$ROOT_DIR\"" >&2
   exit 1
 fi

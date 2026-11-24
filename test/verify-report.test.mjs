@@ -362,6 +362,13 @@ test("English and Korean documents carry the same structure, values and commands
   }
 });
 
+test("the report names the SDK package a run recorded and keeps the legacy name for older runs", (t) => {
+  const run = makeRun(t);
+  assert.match(renderReport(run), /Copilot SDK \(@github\/copilot-sdk\) package version: 0\.0\.0-recorded/);
+  run.summary.copilotSdk = { name: "@microsoft/copilot-sdk", version: "2.0.0" };
+  assert.match(renderReport(run), /Copilot SDK \(@microsoft\/copilot-sdk\) package version: 2\.0\.0/);
+});
+
 test("CLI reads caller-relative input and prints a path valid from repository root without SDK resolution", (t) => {
   const run = makeRun(t);
   const cwd = path.join(ROOT, "docs");
@@ -369,7 +376,7 @@ test("CLI reads caller-relative input and prints a path valid from repository ro
     import Module from 'node:module';
     const original = Module._resolveFilename;
     Module._resolveFilename = function (request, ...args) {
-      if (request === '@github/copilot-sdk') throw new Error('UNEXPECTED_SDK_RESOLUTION');
+      if (request === '@microsoft/copilot-sdk') throw new Error('UNEXPECTED_SDK_RESOLUTION');
       return original.call(this, request, ...args);
     };
     globalThis.fetch = () => { throw new Error('UNEXPECTED_NETWORK'); };

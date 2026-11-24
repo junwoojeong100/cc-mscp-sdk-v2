@@ -147,6 +147,25 @@ function transientBudget(tokens) {
   return `<system-reminder>\n<total_tokens>${tokens} tokens left</total_tokens>\n</system-reminder>`;
 }
 
+test("creates SDK sessions with the nested options SDK 2 expects", async () => {
+  const client = new FakeClient([{ id: "gpt-5.6-sol" }]);
+  const manager = new SessionManager({ baseDirectory: "/tmp", preferredModel: "gpt-5.6-sol", client });
+  await manager.start();
+  try {
+    await manager.execute(request(undefined), {});
+    const { sessionId, systemMessage, ...options } = client.created[0];
+    assert.match(sessionId, /^claude-ghcp-[0-9a-f]{32}$/);
+    assert.equal(systemMessage.mode, "replace");
+    assert.deepEqual(options, {
+      model: "gpt-5.6-sol",
+      tools: { availableTools: [], definitions: [], search: { enabled: false } },
+      events: { streaming: true },
+      state: { infiniteSessions: { enabled: false } },
+      mcp: { disabledServers: ["github-mcp-server"] },
+    });
+  } finally { await manager.stop(); }
+});
+
 test("SDK context tier and catalogue limits survive creation and effort changes", async () => {
   const limits = { max_context_window_tokens: 1178000, max_prompt_tokens: 1050000, max_output_tokens: 128000 };
   const client = new FakeClient([{ id: "gpt-6-astra", capabilities: {
@@ -157,8 +176,8 @@ test("SDK context tier and catalogue limits survive creation and effort changes"
   await manager.start();
   try {
     await manager.execute(request("low", "gpt-6-astra"), {});
-    assert.equal(client.created[0].contextTier, "long_context");
-    assert.deepEqual(client.created[0].modelCapabilities, { limits });
+    assert.equal(client.created[0].inference.contextTier, "long_context");
+    assert.deepEqual(client.created[0].inference.capabilities, { limits });
     client.session.emit("session.usage_info", { tokenLimit: 1050000, currentTokens: 400000 });
     client.session.emit("session.usage_info", { tokenLimit: 1050000, currentTokens: 500000 });
     const budget = diagnostics.filter((event) => event.event === "bridge.context_budget");
@@ -208,13 +227,13 @@ test("every discovered runtime MCP server is disabled on SDK session create and 
       [{ event: "bridge.mcp_servers_disabled", count: 3 }],
     );
     await manager.execute(request(undefined, "gpt-6-sol"), headers);
-    assert.deepEqual(client.created[0].disabledMcpServers, ["github-mcp-server", "playwright", "azure"]);
-    assert.deepEqual(client.created[0].availableTools, [], "MCP servers were never reachable by the model");
+    assert.deepEqual(client.created[0].mcp.disabledServers, ["github-mcp-server", "playwright", "azure"]);
+    assert.deepEqual(client.created[0].tools.availableTools, [], "MCP servers were never reachable by the model");
     [...manager.states.values()][0].lastUsedAt = 0;
     await manager.execute(request(undefined, "gpt-6-sol"), headers);
     assert.equal(resumed.length, 1);
     assert.equal(resumed[0].sessionId, client.created[0].sessionId);
-    assert.deepEqual(resumed[0].config.disabledMcpServers, ["github-mcp-server", "playwright", "azure"]);
+    assert.deepEqual(resumed[0].config.mcp.disabledServers, ["github-mcp-server", "playwright", "azure"]);
     assert.equal(discoverCalls.length, 1, "discovery runs once per bridge start, not per session");
   } finally {
     await manager.stop();
@@ -248,7 +267,7 @@ test("MCP discovery failures keep startup working and still disable the built-in
     try {
       assert.deepEqual(diagnostics.filter((event) => event.event.startsWith("bridge.mcp_")), expected, label);
       assert.equal((await manager.execute(request(undefined, "gpt-6-sol"), {})).message.content, "ok", label);
-      assert.deepEqual(client.created[0].disabledMcpServers, ["github-mcp-server"], label);
+      assert.deepEqual(client.created[0].mcp.disabledServers, ["github-mcp-server"], label);
     } finally {
       await manager.stop();
     }
@@ -670,8 +689,8 @@ test("applies initial and updated Claude Code effort to the Copilot session", as
       "x-claude-code-session-id": "session-1",
     });
     assert.equal(client.created.length, 1);
-    assert.equal(client.created[0].reasoningEffort, "xhigh");
-    assert.deepEqual(client.created[0].toolSearch, {
+    assert.equal(client.created[0].inference.reasoningEffort, "xhigh");
+    assert.deepEqual(client.created[0].tools.search, {
       enabled: false,
     });
 
@@ -2106,8 +2125,8 @@ test("applies a supported effort independently for each model", async () => {
     await manager.execute(request("xhigh", "gpt-5-mini"), headers);
     await manager.execute(request("high", "claude-haiku-4.5"), headers);
 
-    assert.equal(client.created[0].reasoningEffort, "high");
-    assert.equal("reasoningEffort" in client.created[1], false);
+    assert.equal(client.created[0].inference.reasoningEffort, "high");
+    assert.equal("inference" in client.created[1], false);
   } finally {
     await manager.stop();
   }
@@ -2598,7 +2617,7 @@ test("returns a single-message tool request without an idle event", async () => 
       result.message.toolRequests.map((tool) => tool.toolCallId),
       ["tool-1"],
     );
-    assert.equal(client.created[0].tools[0].defer, "never");
+    assert.equal(client.created[0].tools.definitions[0].defer, "never");
   } finally {
     await manager.stop();
   }
@@ -2633,7 +2652,7 @@ test("preloads MCP tools through the safe full-schema fallback", async () => {
       "x-claude-code-session-id": "session-1",
     });
     assert.deepEqual(
-      client.created[0].tools.map(({ defer, name }) => ({ defer, name })),
+      client.created[0].tools.definitions.map(({ defer, name }) => ({ defer, name })),
       [
         { defer: "never", name: "Read" },
         { defer: "never", name: "mcp__e2e__echo" },

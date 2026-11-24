@@ -4,7 +4,8 @@
 
 This bridge lets Claude Code use GitHub Copilot models. It is a local HTTP
 server that speaks the Anthropic Messages API to Claude Code and drives the
-public `@github/copilot-sdk` on the other side. It calls no undocumented Copilot
+public `@microsoft/copilot-sdk` (formerly `@github/copilot-sdk`) on the other
+side. It calls no undocumented Copilot
 endpoint. It is an unofficial integration.
 
 This is the maintainer reference for request flow, sessions and storage. To
@@ -24,8 +25,8 @@ see [LiteLLM](LITELLM.md); for feature-level support, see
 Direct path                               LiteLLM path
 Claude Code                               Claude Code
   -> loopback bridge (src/server.mjs)       -> LiteLLM /v1/messages
-  -> @github/copilot-sdk, mode "empty"      -> the same loopback bridge
-  -> GitHub Copilot model                   -> @github/copilot-sdk
+  -> @microsoft/copilot-sdk, mode "empty"   -> the same loopback bridge
+  -> GitHub Copilot model                   -> @microsoft/copilot-sdk
                                             -> GitHub Copilot model
 ```
 
@@ -67,10 +68,13 @@ the Copilot SDK does not provide a Claude Code integration. The support
 boundary and the pinned SDK version are in the
 [README](../README.md#not-supported).
 
-SDK 1.0.14 ships Copilot runtime 1.0.85 in a platform package
-(`@github/copilot-sdk-*`), and `CopilotClient` uses it unless `COPILOT_CLI_PATH`
-names another runtime. A globally installed Copilot CLI is therefore not
-necessarily the version serving bridge requests.
+SDK 2.0.0 ships Copilot runtime 1.0.113 in a platform package
+(`@microsoft/copilot-sdk-*`), and `CopilotClient` uses it unless `COPILOT_CLI_PATH`
+names another runtime. SDK 2 hosts the runtime inside the calling process by
+default; `src/copilot-client.mjs` selects `RuntimeConnection.forSpawnedStdio`, so
+the runtime stays a child process of the bridge, as it was under SDK 1. A
+globally installed Copilot CLI is therefore not necessarily the version serving
+bridge requests.
 
 ## Request Flow
 
@@ -90,10 +94,11 @@ necessarily the version serving bridge requests.
    ([Session Isolation](#session-isolation)) on its one `CopilotClient`, which
    runs in mode `"empty"`. Every session gets Claude Code's system prompt as
    `systemMessage` with mode `replace`, each declared tool as a declaration
-   with no handler (`defer: "never"`), `availableTools` limited to
-   `custom:<name>` for those tools, SDK tool search and infinite sessions
-   turned off, the resolved `reasoningEffort`, and the runtime MCP servers in
-   `disabledMcpServers`.
+   with no handler (`defer: "never"`), `tools.availableTools` limited to
+   `custom:<name>` for those tools, SDK tool search (`tools.search`) and infinite
+   sessions (`state.infiniteSessions`) turned off, the resolved
+   `inference.reasoningEffort`, and the runtime MCP servers in
+   `mcp.disabledServers`.
 6. The bridge sends the turn. A tool call from the model is returned to Claude
    Code as an Anthropic `tool_use` block.
 7. Claude Code runs the tool and sends the `tool_result` in its next request.
@@ -300,8 +305,8 @@ session closes. The bridge therefore disables them.
   daemon directory. A plugin server is named by its configuration key (for
   example `azure` for azmcp), not by its executable.
 - It adds `github-mcp-server`, which discovery does not report, and passes the
-  list as `disabledMcpServers` on every session create and resume. An empty
-  `mcpServers` map does not replace the discovered servers, so it is not used.
+  list as `mcp.disabledServers` on every session create and resume. An empty
+  `mcp.servers` map does not replace the discovered servers, so it is not used.
 - It logs the count as `bridge.mcp_servers_disabled`. If discovery fails or
   takes longer than 10 seconds, it logs `bridge.mcp_discovery_failed` and
   disables only the built-in server. If the SDK has no `mcp.discover`, it logs
@@ -425,7 +430,7 @@ model's catalogue entry:
   `xhigh` or `max` fails with 400 when the model lists its levels. A model that
   supports effort without listing levels gets the value unchanged.
 
-Sessions are created and resumed with the resolved `reasoningEffort`. When the
+Sessions are created and resumed with the resolved `inference.reasoningEffort`. When the
 effort changes within a Claude Code session, including a reset to the default,
 the bridge calls `session.setModel()` so the next turn uses it and the
 conversation is kept. Workflow orchestration and tool execution stay with
@@ -690,6 +695,7 @@ documents from one explicit run directory. Model concurrency defaults to 1;
 | `bin/resolve-claude.sh` | Finds the real Claude Code binary |
 | `src/server.mjs` | HTTP and SSE server, authentication, body validation, error mapping, diagnostics |
 | `src/session-manager.mjs` | SDK sessions, families, reuse, replay, timeouts, tool handoff, runtime MCP discovery |
+| `src/copilot-client.mjs` | `CopilotClient` options: mode `"empty"`, the runtime as a child process, log level |
 | `src/anthropic.mjs` | Anthropic Messages request and response translation, SSE, usage, effort extraction |
 | `src/request-policy.mjs` | `tool_choice` emulation, unsupported controls and ignored fields |
 | `src/model-map.mjs` | Model IDs, aliases, picker, context hints and tiers, effort resolution |
@@ -707,12 +713,13 @@ Every `bin/` launcher follows symlinks to find its checkout, so a link in
 
 ## References
 
-- [GitHub Copilot SDK](https://github.com/github/copilot-sdk)
-- [Copilot SDK multi-tenancy and `mode: empty`](https://docs.github.com/en/copilot/how-tos/copilot-sdk/setup/multi-tenancy)
-- [Copilot SDK Node.js API](https://github.com/github/copilot-sdk/blob/main/nodejs/README.md)
-- [Copilot SDK manual external-tool handoff](https://github.com/github/copilot-sdk/blob/main/nodejs/samples/manual-tool-resume.ts)
-- [Copilot SDK streaming events](https://docs.github.com/en/copilot/how-tos/copilot-sdk/features/streaming-events)
-- [Copilot SDK authentication](https://docs.github.com/en/copilot/how-tos/copilot-sdk/auth/authenticate)
+- [Microsoft Copilot SDK](https://github.com/microsoft/copilot-sdk) (formerly the GitHub Copilot SDK)
+- [Copilot SDK multi-tenancy and `mode: empty`](https://github.com/microsoft/copilot-sdk/blob/main/docs/setup/multi-tenancy.md)
+- [Copilot SDK Node.js API](https://github.com/microsoft/copilot-sdk/blob/main/nodejs/README.md)
+- [Copilot SDK external tools and `handlePendingToolCall`](https://github.com/microsoft/copilot-sdk/blob/main/docs/getting-started.md#updating-external-tools-in-a-running-session)
+- [Copilot SDK streaming events](https://github.com/microsoft/copilot-sdk/blob/main/docs/features/streaming-events.md)
+- [Copilot SDK authentication](https://github.com/microsoft/copilot-sdk/blob/main/docs/auth/authenticate.md)
+- [Copilot SDK v2 breaking changes](https://github.com/microsoft/copilot-sdk/blob/main/docs/v2-breaking-changes.md)
 - [GitHub Copilot supported models](https://docs.github.com/en/copilot/reference/ai-models/supported-models)
 - [Claude Code gateway protocol](https://code.claude.com/docs/en/llm-gateway-protocol)
 - [Claude Code third-party gateway support boundary](https://code.claude.com/docs/en/llm-gateway)

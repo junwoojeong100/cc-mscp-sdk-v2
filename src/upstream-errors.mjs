@@ -20,7 +20,7 @@ const RATE_LIMIT_ERROR_TYPES = new Set(["rate_limit", "quota"]);
 
 export function sessionError(data, { retryAfterSeconds = null } = {}) {
   const { errorType, message: upstreamMessage, statusCode } = data || {};
-  const message = upstreamMessage || "GitHub Copilot SDK session error.";
+  const message = upstreamMessage || "Microsoft Copilot SDK session error.";
   if (RATE_LIMIT_ERROR_TYPES.has(errorType) || statusCode === 429) {
     return new UpstreamError(message, {
       status: 429,

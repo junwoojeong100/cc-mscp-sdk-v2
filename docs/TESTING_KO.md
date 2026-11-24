@@ -4,7 +4,7 @@
 
 필수 실측은 **V01–V06 시나리오 6개를 주요 모델 6개 모두에 실행**하는 것입니다.
 Claude Opus 5.5, Sonnet 5, Haiku 4.5, GPT-6 Astra, Sol, Luna가 대상이며 총 **36개 슬롯**입니다.
-일반적인 Claude Code 기능 전체가 아니라 Claude Code → 브리지 → GitHub Copilot SDK →
+일반적인 Claude Code 기능 전체가 아니라 Claude Code → 브리지 → Microsoft Copilot SDK →
 Copilot 모델 연동을 검사합니다. 아래 목록은 통과 조건이지 결과가 아닙니다. 가장 최근에
 기록된 결과와 범위는 [검증 결과](VERIFICATION_KO.md)에 있습니다. 부분 실행이나 이전
 시나리오 개정판으로 기록된 실행은 이 행렬의 결과를 증명하지 못합니다.

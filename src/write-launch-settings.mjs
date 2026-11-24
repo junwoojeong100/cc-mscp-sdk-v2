@@ -35,7 +35,7 @@ writeGatewaySettings(outputPath, {
     haiku: "GitHub Copilot Claude Haiku 4.5",
     custom: `GitHub Copilot ${frontendModel}`,
   },
-  description: "Routed through GitHub Copilot SDK",
+  description: "Routed through Microsoft Copilot SDK",
   extraEnv: {
     ENABLE_TOOL_SEARCH: nativeToolSearch === "1" ? "true" : "",
     CLAUDE_CODE_ATTRIBUTION_HEADER: "0",

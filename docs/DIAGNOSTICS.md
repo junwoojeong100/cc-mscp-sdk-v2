@@ -19,6 +19,7 @@ project and call the launcher's absolute path.
 | Symptom | First action |
 |---|---|
 | Executable not found, unsupported Node, or launch fails before connecting | Run `./bin/ghcp-doctor`; see [Environment check](#environment-check). |
+| The bridge exits at startup with `SDK protocol version mismatch` | The runtime that `COPILOT_CLI_PATH` names speaks another protocol than the pinned SDK (protocol 4). Unset `COPILOT_CLI_PATH` (a Copilot CLI session exports it) or point it at a current Copilot CLI. |
 | Model lookup reports an authentication failure | Check the account and sign-in directory, then use `copilot login` if needed; see [Catalogue and model problems](#catalogue-and-model-problems). |
 | Model lookup reports a missing dependency or connection failure | Fix the installation, PATH, network or proxy named by the error. Re-login is not the default remedy. |
 | Requested model is missing, disallowed, or rejected despite appearing in a fresh list | Check the exact model ID, account policy and possible stale bridge catalogue below. |

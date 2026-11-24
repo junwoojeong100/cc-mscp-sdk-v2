@@ -29,7 +29,7 @@ const SIDE_EFFECT_GUARD = `
   import Module, { syncBuiltinESMExports } from 'node:module';
   const resolveFilename = Module._resolveFilename;
   Module._resolveFilename = function (request, ...args) {
-    if (request === '@github/copilot-sdk') {
+    if (request === '@microsoft/copilot-sdk') {
       process.stderr.write('UNEXPECTED_SDK_RESOLUTION\\n');
       process.exit(99);
     }
@@ -279,7 +279,7 @@ async function completedRun(t, { models = PRIMARY_MODELS, scenarios = SCENARIOS,
       await new Promise(resolve => setImmediate(resolve));
       const saved = JSON.parse(fs.readFileSync(path.join(options.runDir, "summary.json")));
       assert.equal(saved.expectedTotal, models.length * scenarios.length); assert.equal(saved.green, false); assert.equal(saved.provenance.end, null);
-      assert.deepEqual(saved.copilotSdk, { version: sdkVersion }); assert.deepEqual(saved.preflight, options.preflight);
+      assert.deepEqual(saved.copilotSdk, { name: "@microsoft/copilot-sdk", version: sdkVersion }); assert.deepEqual(saved.preflight, options.preflight);
       called.push([options.model, options.scenario.id]);
       const slot = passingSlot(t, options.scenario.id, options.model, options.preflight);
       if (outcome !== "pass") { slot.outcome = outcome; slot.reason = `offline ${outcome}`; }
@@ -294,7 +294,7 @@ async function completedRun(t, { models = PRIMARY_MODELS, scenarios = SCENARIOS,
   });
   const dirs = fs.readdirSync(out); assert.equal(dirs.length, 1);
   const runDir = path.join(out, dirs[0]), loaded = loadRun(runDir), { summary, slots } = loaded;
-  assert.ok(summary.finishedAt); assert.deepEqual(summary.copilotSdk, { version: sdkVersion });
+  assert.ok(summary.finishedAt); assert.deepEqual(summary.copilotSdk, { name: "@microsoft/copilot-sdk", version: sdkVersion });
   assert.equal(summary.expectedTotal, models.length * scenarios.length); assert.equal(summary.actualTotal, summary.expectedTotal);
   assert.equal(slots.length, summary.expectedTotal); assert.equal(summary.gate, summary.expectedTotal);
   assert.deepEqual(loaded.integrityProblems, [], loaded.integrityProblems.join("\n"));

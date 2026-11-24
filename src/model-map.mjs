@@ -275,7 +275,7 @@ export function primaryModelPicker() {
     options: PRIMARY_MODELS.map((id) => ({
       model: launchModelFor(id),
       label: gatewayDisplayName({ id, name: PRIMARY_MODEL_NAMES[id] }),
-      description: "Routed through GitHub Copilot SDK",
+      description: "Routed through Microsoft Copilot SDK",
     })),
   };
 }

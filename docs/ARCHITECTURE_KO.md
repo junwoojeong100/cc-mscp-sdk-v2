@@ -4,7 +4,7 @@
 
 이 브리지는 Claude Code가 GitHub Copilot 모델을 쓰게 해 주는 로컬 HTTP 서버입니다.
 Claude Code 쪽으로는 Anthropic Messages API로 응답하고, 반대쪽으로는 공개된
-`@github/copilot-sdk`를 구동합니다. 문서화되지 않은 Copilot 엔드포인트는 호출하지
+`@microsoft/copilot-sdk`(이전 이름 `@github/copilot-sdk`)를 구동합니다. 문서화되지 않은 Copilot 엔드포인트는 호출하지
 않습니다. 비공식 통합입니다.
 
 요청 흐름, 세션과 저장 방식을 다루는 유지보수자용 참고 문서입니다. 설치와 실행은
@@ -22,8 +22,8 @@ Claude Code 쪽으로는 Anthropic Messages API로 응답하고, 반대쪽으로
 Direct 경로                               LiteLLM 경로
 Claude Code                               Claude Code
   -> 루프백 브리지 (src/server.mjs)         -> LiteLLM /v1/messages
-  -> @github/copilot-sdk, mode "empty"      -> 같은 루프백 브리지
-  -> GitHub Copilot 모델                    -> @github/copilot-sdk
+  -> @microsoft/copilot-sdk, mode "empty"   -> 같은 루프백 브리지
+  -> GitHub Copilot 모델                    -> @microsoft/copilot-sdk
                                             -> GitHub Copilot 모델
 ```
 
@@ -63,10 +63,12 @@ Anthropic은 게이트웨이를 거쳐 Claude가 아닌 모델로 요청을 보�
 않습니다. Copilot SDK는 Claude Code 통합을 제공하지 않습니다. 지원 경계와 고정한 SDK
 버전은 [README](../README_KO.md#지원하지-않는-것)에 있습니다.
 
-SDK 1.0.14는 Copilot 런타임 1.0.85를 플랫폼별 패키지(`@github/copilot-sdk-*`)에
+SDK 2.0.0은 Copilot 런타임 1.0.113을 플랫폼별 패키지(`@microsoft/copilot-sdk-*`)에
 담아 제공합니다. `COPILOT_CLI_PATH`로 다른 런타임을 지정하지 않으면 `CopilotClient`는
-이 런타임을 씁니다. 따라서 전역으로 설치한 Copilot CLI가 브리지 요청을 처리하는
-버전이라고 단정할 수 없습니다.
+이 런타임을 씁니다. SDK 2는 기본적으로 런타임을 호출한 프로세스 안에서 실행하지만,
+`src/copilot-client.mjs`가 `RuntimeConnection.forSpawnedStdio`를 골라 SDK 1 때처럼
+런타임이 브리지의 자식 프로세스로 남습니다. 따라서 전역으로 설치한 Copilot CLI가
+브리지 요청을 처리하는 버전이라고 단정할 수 없습니다.
 
 ## 요청 흐름
 
@@ -84,9 +86,10 @@ SDK 1.0.14는 Copilot 런타임 1.0.85를 플랫폼별 패키지(`@github/copilo
    새로 만듭니다([세션 분리](#세션-분리)). 이 클라이언트는 `"empty"` 모드로
    실행합니다. 모든 세션은 Claude Code의 시스템 프롬프트를 `systemMessage`(모드
    `replace`)로 받습니다. 선언된 도구는 각각 핸들러 없는 선언(`defer: "never"`)으로
-   등록하고, `availableTools`는 그 도구들의 `custom:<name>`으로 제한합니다. SDK 도구
-   검색과 무한 세션은 끄고, 정해진 `reasoningEffort`를 넘기며, 런타임 MCP 서버는
-   `disabledMcpServers`에 넣습니다.
+   등록하고, `tools.availableTools`는 그 도구들의 `custom:<name>`으로 제한합니다. SDK 도구
+   검색(`tools.search`)과 무한 세션(`state.infiniteSessions`)은 끄고, 정해진
+   `inference.reasoningEffort`를 넘기며, 런타임 MCP 서버는
+   `mcp.disabledServers`에 넣습니다.
 6. 브리지가 턴을 보냅니다. 모델이 도구를 호출하면 Anthropic `tool_use` 블록으로
    Claude Code에 돌려줍니다.
 7. Claude Code가 도구를 실행하고 다음 요청에 `tool_result`를 담아 보냅니다.
@@ -275,7 +278,7 @@ Copilot 런타임은 `"empty"` 모드에서도 SDK 세션마다 사용자의 Cop
   이름을 알아냅니다. 상주 브리지의 작업 디렉터리는 데몬 디렉터리입니다. 플러그인
   서버의 이름은 실행 파일이 아니라 설정 키입니다(예: azmcp는 `azure`).
 - 탐색 결과에 나오지 않는 `github-mcp-server`를 더하고, 이 목록을 세션을 만들거나
-  재개할 때마다 `disabledMcpServers`로 넘깁니다. 빈 `mcpServers` 맵은 탐색된 서버를
+  재개할 때마다 `mcp.disabledServers`로 넘깁니다. 빈 `mcp.servers` 맵은 탐색된 서버를
   대신하지 못하므로 쓰지 않습니다.
 - 끈 서버 수를 `bridge.mcp_servers_disabled`로 남깁니다. 탐색이 실패하거나 10초를
   넘기면 `bridge.mcp_discovery_failed`를 남기고 기본 제공 서버만 끕니다. SDK에
@@ -392,7 +395,7 @@ Copilot은 캐시된 토큰을 포함해 입력 토큰을 보고하고, Anthropi
   모델이 수준을 나열하는 경우 400으로 실패합니다. effort를 지원하지만 수준을
   나열하지 않는 모델에는 값을 그대로 넘깁니다.
 
-세션은 정해진 `reasoningEffort`로 만들고 재개합니다. Claude Code 세션 안에서 effort가
+세션은 정해진 `inference.reasoningEffort`로 만들고 재개합니다. Claude Code 세션 안에서 effort가
 바뀌면(기본값으로 되돌리는 경우 포함) 브리지는 `session.setModel()`을 호출합니다.
 그러면 다음 턴부터 새 값을 쓰고 대화는 그대로 유지됩니다. 워크플로 조정과 도구
 실행은 계속 Claude Code가 맡습니다.
@@ -631,6 +634,7 @@ V06은 정상 종료 뒤의 콜드 대화 재전송을 검사하며 진행 중�
 | `bin/resolve-claude.sh` | 실제 Claude Code 실행 파일 찾기 |
 | `src/server.mjs` | HTTP와 SSE 서버, 인증, 본문 검사, 오류 변환, 진단 로그 |
 | `src/session-manager.mjs` | SDK 세션, 요청 묶음, 재사용, 재전송, 타임아웃, 도구 넘겨주기, 런타임 MCP 탐색 |
+| `src/copilot-client.mjs` | `CopilotClient` 옵션: `"empty"` 모드, 자식 프로세스로 실행하는 런타임, 로그 수준 |
 | `src/anthropic.mjs` | Anthropic Messages 요청과 응답 변환, SSE, 사용량, effort 추출 |
 | `src/request-policy.mjs` | `tool_choice` 흉내, 적용하지 않는 제어 값과 무시하는 필드 |
 | `src/model-map.mjs` | 모델 ID, 별칭, `/model` 목록, 컨텍스트 표시와 등급, effort 결정 |
@@ -647,12 +651,13 @@ V06은 정상 종료 뒤의 콜드 대화 재전송을 검사하며 진행 중�
 
 ## 참고 자료
 
-- [GitHub Copilot SDK](https://github.com/github/copilot-sdk)
-- [Copilot SDK 멀티테넌시와 `mode: empty`](https://docs.github.com/en/copilot/how-tos/copilot-sdk/setup/multi-tenancy)
-- [Copilot SDK Node.js API](https://github.com/github/copilot-sdk/blob/main/nodejs/README.md)
-- [Copilot SDK 수동 외부 도구 넘겨주기 예제](https://github.com/github/copilot-sdk/blob/main/nodejs/samples/manual-tool-resume.ts)
-- [Copilot SDK 스트리밍 이벤트](https://docs.github.com/en/copilot/how-tos/copilot-sdk/features/streaming-events)
-- [Copilot SDK 인증](https://docs.github.com/en/copilot/how-tos/copilot-sdk/auth/authenticate)
+- [Microsoft Copilot SDK](https://github.com/microsoft/copilot-sdk) (이전 이름 GitHub Copilot SDK)
+- [Copilot SDK 멀티테넌시와 `mode: empty`](https://github.com/microsoft/copilot-sdk/blob/main/docs/setup/multi-tenancy.md)
+- [Copilot SDK Node.js API](https://github.com/microsoft/copilot-sdk/blob/main/nodejs/README.md)
+- [Copilot SDK 외부 도구와 `handlePendingToolCall`](https://github.com/microsoft/copilot-sdk/blob/main/docs/getting-started.md#updating-external-tools-in-a-running-session)
+- [Copilot SDK 스트리밍 이벤트](https://github.com/microsoft/copilot-sdk/blob/main/docs/features/streaming-events.md)
+- [Copilot SDK 인증](https://github.com/microsoft/copilot-sdk/blob/main/docs/auth/authenticate.md)
+- [Copilot SDK v2 브레이킹 체인지](https://github.com/microsoft/copilot-sdk/blob/main/docs/v2-breaking-changes.md)
 - [GitHub Copilot 지원 모델](https://docs.github.com/en/copilot/reference/ai-models/supported-models)
 - [Claude Code 게이트웨이 프로토콜](https://code.claude.com/docs/en/llm-gateway-protocol)
 - [Claude Code 서드파티 게이트웨이 지원 범위](https://code.claude.com/docs/en/llm-gateway)

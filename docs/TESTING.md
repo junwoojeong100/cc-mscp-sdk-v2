@@ -4,7 +4,7 @@
 
 The required live check is **six scenarios, V01–V06, on all six primary models**:
 Claude Opus 5.5, Sonnet 5, Haiku 4.5, GPT-6 Astra, Sol and Luna. That is **36 slots**.
-It tests Claude Code → bridge → GitHub Copilot SDK → Copilot models, not every
+It tests Claude Code → bridge → Microsoft Copilot SDK → Copilot models, not every
 Claude Code feature. The checks below are a pass contract, not a result. The
 latest recorded outcome and its scope are in [Verification Results](VERIFICATION.md);
 a focused run, or one recorded under an older scenario revision, cannot establish

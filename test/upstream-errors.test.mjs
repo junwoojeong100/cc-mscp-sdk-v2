@@ -30,7 +30,7 @@ test("session errors classify on errorType first and statusCode second", () => {
     assert.equal(error instanceof UpstreamError, false, JSON.stringify(data));
     assert.equal(error.message, data.message);
   }
-  assert.equal(sessionError(undefined).message, "GitHub Copilot SDK session error.");
+  assert.equal(sessionError(undefined).message, "Microsoft Copilot SDK session error.");
   assert.equal(sessionError({ errorType: "rate_limit" }, { retryAfterSeconds: 30 }).retryAfterSeconds, 30);
 });
 
