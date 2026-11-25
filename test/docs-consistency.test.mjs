@@ -146,9 +146,9 @@ test("every relative link and anchor in README and docs resolves", () => {
 });
 
 // docs/hands-on/ is the root of the GitHub Pages site (.github/workflows/pages.yml),
-// so a missing sibling file or a guide its landing page does not list breaks the published pages.
+// so a missing sibling file, a dead in-page anchor or a guide its landing page does not list breaks the published pages.
 // Every language has a landing page (index.html for Korean, index_EN.html for English) that also links to the other one.
-test("the published hands-on pages link only to files in their folder and each landing page lists its guides", () => {
+test("the published hands-on pages link only to files and anchors that exist and each landing page lists its guides", () => {
   const dir = path.join(root, "docs/hands-on");
   const landing = { KO: "index.html", EN: "index_EN.html" };
   const pages = fs.readdirSync(dir).filter((name) => name.endsWith(".html"));
@@ -161,6 +161,10 @@ test("the published hands-on pages link only to files in their folder and each l
       if (/^(?:[a-z][a-z0-9+.-]*:|#)/i.test(target)) continue;
       if (!fs.existsSync(path.join(dir, decodeURIComponent(target.split("#")[0])))) problems.push(`${page}: missing ${target}`);
     }
+    const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(([, id]) => id));
+    for (const [, anchor] of html.matchAll(/\bhref="#([^"]+)"/g)) {
+      if (!ids.has(anchor)) problems.push(`${page}: no element with id ${anchor}`);
+    }
   }
   for (const [lang, file] of Object.entries(landing)) {
     const html = fs.readFileSync(path.join(dir, file), "utf8");
@@ -171,6 +175,46 @@ test("the published hands-on pages link only to files in their folder and each l
     if (!html.includes(`href="${other}"`)) problems.push(`${file}: no link to ${other}`);
   }
   assert.deepEqual(problems, []);
+});
+
+// The existing-LiteLLM config appears in both LiteLLM guides and both hands-on guides.
+test("every guide shows the same config for adding the bridge to an existing LiteLLM", () => {
+  const fromMarkdown = (file, heading) => {
+    const [, yaml] = section(read(file), heading).match(/```yaml\n([\s\S]*?)\n```/) ?? [];
+    assert.ok(yaml, `${file}: config block`);
+    return yaml;
+  };
+  const fromHtml = (file) => {
+    const panel = read(file).split('id="existing-litellm"')[1]?.split("</section>")[0];
+    const [, pre] = panel?.match(/<pre><code>(model_list:[\s\S]*?)<\/code><\/pre>/) ?? [];
+    assert.ok(pre, `${file}: config block`);
+    return pre.replace(/<[^>]+>/g, "").replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
+  };
+  // Comments are translated; the settings must not differ.
+  const settings = (yaml) => yaml.split("\n").filter((line) => line.trim() && !line.trim().startsWith("#"));
+  const [[first, reference], ...others] = Object.entries({
+    "docs/LITELLM.md": fromMarkdown("docs/LITELLM.md", "### 2. Add the models to your config"),
+    "docs/LITELLM_KO.md": fromMarkdown("docs/LITELLM_KO.md", "### 2. 설정에 모델 추가"),
+    "docs/hands-on/HANDS_ON_LITELLM_EN.html": fromHtml("docs/hands-on/HANDS_ON_LITELLM_EN.html"),
+    "docs/hands-on/HANDS_ON_LITELLM_KO.html": fromHtml("docs/hands-on/HANDS_ON_LITELLM_KO.html"),
+  }).map(([file, yaml]) => [file, settings(yaml)]);
+  for (const [file, lines] of others) assert.deepEqual(lines, reference, `${file} differs from ${first}`);
+
+  // It reaches the bridge the way the example config does.
+  const example = read("examples/litellm-github-copilot.yaml");
+  const bridge = reference.filter((line) => /^\s+api_(?:base|key): /.test(line));
+  assert.equal(bridge.length, 2, "api_base and api_key lines");
+  for (const line of bridge) assert.ok(example.includes(line.trim()), `the example config lacks ${line.trim()}`);
+
+  // Its alias is one the example config does not use: entries that share a model_name split requests between them.
+  const alias = reference.find((line) => /^\s+- model_name: /.test(line)).split(": ")[1];
+  assert.ok(!example.split("\n").some((line) => line.trim() === `- model_name: ${alias}`), `${alias} collides with the example config`);
+
+  // Client headers are forwarded for that alias only, not gateway-wide.
+  const forward = reference.findIndex((line) => line.trim() === "forward_client_headers_to_llm_api:");
+  assert.deepEqual(reference.slice(forward + 1).map((line) => line.trim()), [`- ${alias}`]);
+  assert.ok(reference.some((line) => line.trim() === "model_group_settings:"), "model_group_settings");
+  assert.ok(!reference.some((line) => line.trim().startsWith("general_settings")), "no gateway-wide settings");
 });
 
 // Lines inside fenced code blocks.
