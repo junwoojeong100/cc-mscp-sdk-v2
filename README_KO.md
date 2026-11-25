@@ -211,7 +211,7 @@ cd "/path/to/your-project"
 "/absolute/path/to/cc-mscp-sdk-v2/bin/claude-litellm"
 ```
 
-연결 방법, 게이트웨이 운영, Direct SDK와 다른 점은 [LiteLLM 가이드](docs/LITELLM_KO.md)를 참고하세요.
+연결 방법, 게이트웨이 운영, 이미 운영 중인 LiteLLM에 브리지 추가, Direct SDK와 다른 점은 [LiteLLM 가이드](docs/LITELLM_KO.md)를 참고하세요.
 
 ## 명령과 설정
 
@@ -349,6 +349,6 @@ npm run verify -- --dry-run
 | 테스트 실행, 실패 확인, 결과 문서 생성 | [테스트 가이드](docs/TESTING_KO.md) |
 | 특정 Claude Code 기능이 되는지 | [호환성](docs/COMPATIBILITY_KO.md) |
 | 마지막으로 기록한 핵심 시나리오의 모델별 결과 | [검증 결과](docs/VERIFICATION_KO.md) |
-| LiteLLM 게이트웨이 사용과 운영 | [LiteLLM 가이드](docs/LITELLM_KO.md) |
+| LiteLLM 게이트웨이 사용과 운영, 기존 LiteLLM에 브리지 추가 | [LiteLLM 가이드](docs/LITELLM_KO.md) |
 | 화면 캡처와 영상으로 따라 하기 | [실습 가이드 ① Direct SDK](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_DIRECT_KO.html) · [실습 가이드 ② LiteLLM 경유](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_LITELLM_KO.html) |
 | 모든 환경 변수와 기본값 | [`.env.example`](.env.example) |

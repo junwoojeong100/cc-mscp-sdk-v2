@@ -357,7 +357,7 @@ td code { white-space: normal; word-break: normal; overflow-wrap: anywhere; }
     <ul class="chips">
       <li><b>About 20 min</b> (including the first LiteLLM install)</li>
       <li><b>2 terminals</b> (A · B)</li>
-      <li>Needs: <b>uv</b>, Copilot login</li>
+      <li>Needs: <b>Copilot login</b>, <b>uv</b> (only to install a new LiteLLM)</li>
       <li>Prompts use <b>the operator's Copilot seat</b></li>
     </ul>
     <div class="cta">
@@ -422,7 +422,7 @@ td code { white-space: normal; word-break: normal; overflow-wrap: anywhere; }
   <text x="545" y="252" text-anchor="middle" font-size="13" style="fill:var(--diagram-sub,#aebbe0)">Every request through the gateway runs on the operator's one Copilot seat, under that organization's policy</text>
 </svg>
 </div>
-      <p class="note">LiteLLM reaches the bridge through its <code>anthropic/*</code> provider. If you only need Copilot models, <a href="HANDS_ON_DIRECT_EN.html" style="color:#9fc0ff">Hands-on guide ① Direct</a> is simpler.</p>
+      <p class="note">LiteLLM reaches the bridge through its <code>anthropic/*</code> provider. If you only need Copilot models, <a href="HANDS_ON_DIRECT_EN.html" style="color:#9fc0ff">Hands-on guide ① Direct</a> is simpler. If you already have a LiteLLM, pick the path that fits you under <a href="#know" style="color:#9fc0ff">Know this first</a>.</p>
     </div>
   </div>
 </section>
@@ -432,7 +432,7 @@ td code { white-space: normal; word-break: normal; overflow-wrap: anywhere; }
     <h2>Watch first</h2><ol><li><a href="#video"><span class="n">·</span>Watch the video</a></li><li><a href="#know"><span class="n">·</span>Know this first</a></li></ol>
     <div class="sep">Follow along</div>
     <ol><li data-step="s1"><a href="#s1"><span class="n"><span>1</span></span>Check prerequisites (Terminal A)</a></li><li data-step="s2"><a href="#s2"><span class="n"><span>2</span></span>Pin the bridge port (A)</a></li><li data-step="s3"><a href="#s3"><span class="n"><span>3</span></span>Start the bridge, get the token (A)</a></li><li data-step="s4"><a href="#s4"><span class="n"><span>4</span></span>Install and start LiteLLM (A)</a></li><li data-step="s5"><a href="#s5"><span class="n"><span>5</span></span>Check the client connection (B)</a></li><li data-step="s6"><a href="#s6"><span class="n"><span>6</span></span>Run Claude Code (B)</a></li><li data-step="s7"><a href="#s7"><span class="n"><span>7</span></span>Stop and clean up</a></li></ol>
-    <div class="sep">Reference</div><ol><li><a href="#trouble"><span class="n">·</span>Troubleshooting table</a></li></ol>
+    <div class="sep">Reference</div><ol><li><a href="#client-only"><span class="n">·</span>Connect to an existing gateway</a></li><li><a href="#existing-litellm"><span class="n">·</span>Add the bridge to an existing LiteLLM</a></li><li><a href="#trouble"><span class="n">·</span>Troubleshooting table</a></li></ol>
   </nav>
   <main>
 
@@ -458,8 +458,15 @@ td code { white-space: normal; word-break: normal; overflow-wrap: anywhere; }
 <section class="panel" id="know" data-nav="Know this first">
   <h2 class="section-title">Know this first</h2>
   <p class="section-sub">Adding LiteLLM gets you some things and costs you others. Check them once before you start.</p>
+  <div class="callout tip"><b>Pick the path that fits your situation</b>
+    <ul>
+      <li><b>You don't have a LiteLLM yet.</b> Follow steps 1–7 below in order. This is the guide's main flow, and it ends at step 7.</li>
+      <li><b>You already run your own LiteLLM.</b> Don't install a new one; follow <a href="#existing-litellm">Add the bridge to an existing LiteLLM</a>. You don't need <code>uv</code>, and that section is the whole path.</li>
+      <li><b>Someone else runs the gateway and gave you its URL and a key.</b> Follow <a href="#client-only">Connect to an existing gateway</a>. You only do the Terminal B side, and that section is the whole path.</li>
+    </ul>
+  </div>
   <div class="roles">
-    <div class="role a"><h4><span class="term a">Terminal A</span>Gateway operator</h4><p>Starts the bridge and the LiteLLM server and <b>keeps them open</b>. Needs the repository, <code>npm ci</code>, <code>copilot login</code> and <code>uv</code>.</p></div>
+    <div class="role a"><h4><span class="term a">Terminal A</span>Gateway operator</h4><p>Starts the bridge and the LiteLLM server and <b>keeps them open</b>. Needs the repository, <code>npm ci</code> and <code>copilot login</code>, plus <code>uv</code> if you install a new LiteLLM.</p></div>
     <div class="role b"><h4><span class="term b">Terminal B</span>Client</h4><p>Runs Claude Code. All it needs is the gateway address and a key. <code>npm ci</code> and <code>copilot login</code> aren't required.</p></div>
   </div>
   <div class="tablewrap"><table>
@@ -486,7 +493,7 @@ td code { white-space: normal; word-break: normal; overflow-wrap: anywhere; }
   </div>
   <ol class="how">
     <li>Make sure you've finished <a href="HANDS_ON_DIRECT_EN.html#s1">Hands-on guide ①, steps 1–2</a> (install, <code>copilot login</code>).</li>
-    <li>Check that <code>uv</code> is installed. The LiteLLM setup script uses it to create a Python 3.13 environment. If you don't have it, install it (macOS: <code>brew install uv</code>).</li>
+    <li>Check that <code>uv</code> is installed. The LiteLLM setup script uses it to create a Python 3.13 environment. If you don't have it, install it (macOS: <code>brew install uv</code>). <b>If you are only adding the bridge to a LiteLLM you already run, skip this item.</b></li>
     <li>From here on, run <b>every command in the repository folder</b>. Terminal A is for the bridge and the LiteLLM server, and the server keeps running in the foreground, so <b>don't paste client commands into a Terminal A that is running a server.</b></li>
   </ol>
   <div class="code"><div class="cap"><b>Terminal A</b><button class="copy" type="button">Copy</button></div><pre><code>cd ~/cc-mscp-sdk
@@ -580,6 +587,9 @@ printf 'x-api-key: %s\n' "$GHCP_BRIDGE_TOKEN" |
     <div class="step-no">4</div>
     <div><h2><span class="term a">Terminal A</span>Install and start LiteLLM</h2><p class="goal">Install LiteLLM <b>once, the first time</b>, and start the server.</p></div>
     <span class="time">About 6 min to install + start</span>
+  </div>
+  <div class="callout tip"><b>If you already run a LiteLLM</b>
+    <p>Skip this step and follow <a href="#existing-litellm">Add the bridge to an existing LiteLLM</a>. Instead of installing a new LiteLLM, you add the bridge to the config of the one you already use. That section includes the connection check and running Claude Code, so it is all you need to follow (steps 5–7 are not needed).</p>
   </div>
   <ol class="how">
     <li>In the <b>same shell</b> as step 3, install the local runtime. It downloads LiteLLM v1.97.0 into <code>.runtime/</code> and also creates a master key. You only need to do this once, and it took about 6 minutes in the recording environment.</li>
@@ -732,7 +742,7 @@ printf 'Authorization: Bearer %s\n' "$LITELLM_API_KEY" |
       <li>After a reboot, the bridge and LiteLLM don't start on their own. In Terminal A, run step 3 and <code>npm run litellm:start</code> again. You don't need to repeat the install.</li>
     </ul>
   </div>
-  <div class="done-row"><label><input type="checkbox"> Step 7 done</label><a class="next" href="#client-only">Next: Connect to an existing gateway →</a></div>
+  <div class="done-row"><label><input type="checkbox"> Step 7 done</label><a class="next" href="#trouble">Done! If you're stuck: Troubleshooting table →</a></div>
 </section>
 
 <section class="panel" id="client-only" data-nav="Connect to an existing gateway">
@@ -752,7 +762,68 @@ export LITELLM_MODEL="claude-sonnet-5"
   <ul>
     <li>Continue only if <code>curl</code> succeeds and returns a model list. The <code>id</code> values in the list are the aliases you can use for <code>LITELLM_MODEL</code>.</li>
     <li>Set <code>LITELLM_BASE_URL</code> to the gateway's <b>root URL</b> (no <code>/v1</code>).</li>
+    <li>In Claude Code, type <code>Reply with OK</code>. A reply means one request through that gateway worked. Leaving with <code>/exit</code> doesn't stop the operator's gateway, and your prompts use the operator's Copilot allowance.</li>
   </ul>
+  <div class="done-row"><span><b>This path ends here.</b> You don't need steps 1–7.</span><a class="next" href="#trouble">Stuck? Troubleshooting table →</a></div>
+</section>
+
+<section class="panel" id="existing-litellm" data-nav="Add the bridge to an existing LiteLLM">
+  <h2 class="section-title">If you already run your own LiteLLM</h2>
+  <p class="section-sub">Skip the install and start in step 4 and add the bridge to your LiteLLM's config as one more model. Your existing models, keys and settings stay as they are. Your LiteLLM has to run on the <b>same computer</b> as the bridge, which only accepts requests on <code>127.0.0.1</code>. Work through the five items below in order and you are done; you do not need to go back to steps 5–7.</p>
+  <ol>
+    <li><span class="term a">Terminal A</span><b>Prepare the bridge.</b> Follow steps <a href="#s1">1</a> (skip the <code>uv</code> check), <a href="#s2">2</a> (pin the bridge port) and <a href="#s3">3</a> (start the bridge, get the token) above, and no further. If you have already done step 3, this item is done. That shell then holds <code>GHCP_BRIDGE_URL</code> and <code>GHCP_BRIDGE_TOKEN</code>.</li>
+    <li><span class="term a">Terminal A</span><b>Add the models to your config.</b> Add the entries below to your LiteLLM config file, <b>under the top-level keys it already has</b>. Give <code>model_name</code> a <b>new name</b> that your config does not use yet (see the cautions below). YAML keeps only the last copy of a repeated key, so a second <code>model_list:</code> or <code>litellm_settings:</code> block would replace the first.
+      <div class="code"><div class="cap"><b>Add to your LiteLLM config file</b><button class="copy" type="button">Copy</button></div><pre><code>model_list:
+  <span class="c"># ...your existing models...</span>
+  - model_name: copilot-claude-sonnet-5
+    litellm_params:
+      model: anthropic/claude-sonnet-5
+      api_base: os.environ/GHCP_BRIDGE_URL
+      api_key: os.environ/GHCP_BRIDGE_TOKEN
+
+litellm_settings:
+  <span class="c"># ...your existing settings...</span>
+  model_group_settings:
+    forward_client_headers_to_llm_api:
+      - copilot-claude-sonnet-5</code></pre></div>
+      Add one <code>model_list</code> entry per Copilot model (an ID from <code>./bin/ghcp-models</code> goes after <code>anthropic/</code>), and list each new <code>model_name</code> under <code>forward_client_headers_to_llm_api</code> too.</li>
+    <li><span class="term a">Terminal A</span><b>Restart LiteLLM.</b> In the same shell, restart your LiteLLM the way you normally start it. LiteLLM reads <code>os.environ/</code> values once, at startup.
+      <div class="code"><div class="cap"><b>Terminal A</b><button class="copy" type="button">Copy</button></div><pre><code>litellm --config /absolute/path/to/your-config.yaml</code></pre></div></li>
+    <li><span class="term b">Terminal B</span><b>Check the connection.</b> Open a new terminal, enter this repository's folder, and list the models with your LiteLLM's URL and key and the new alias. Continue when the new alias is printed. Leave <code>/v1</code> off the URL.
+      <div class="code"><div class="cap"><b>Terminal B — repository folder</b><button class="copy" type="button">Copy</button></div><pre><code>cd ~/cc-mscp-sdk
+export LITELLM_BASE_URL="http://127.0.0.1:4000"  <span class="c"># your LiteLLM's root URL</span>
+export LITELLM_API_KEY="<span class="ph">&lt;your LiteLLM key&gt;</span>"
+export LITELLM_MODEL="copilot-claude-sonnet-5"
+
+printf 'Authorization: Bearer %s\n' "$LITELLM_API_KEY" |
+  curl --silent --show-error --fail -H @- "$LITELLM_BASE_URL/v1/models" |
+  grep -o '"id":"copilot-claude-sonnet-5"'</code></pre></div></li>
+    <li><span class="term b">Terminal B</span><b>Run Claude Code.</b> In the same terminal, start the launcher. If it's the first time you open this folder, a trust prompt appears. The default choice is <code>No, exit</code>, so press <kbd>↓</kbd> to select <code>Yes, I trust this folder</code>, then press <kbd>Enter</kbd>. Then type <code>Reply with OK</code> and press <kbd>Enter</kbd>. An <code>OK</code> reply means it works. Type <code>/exit</code> to leave.
+      <div class="code"><div class="cap"><b>Terminal B</b><button class="copy" type="button">Copy</button></div><pre><code>./bin/claude-litellm</code></pre></div></li>
+  </ol>
+  <div class="callout ok"><b>Success criteria — you are done when both of these are true</b>
+    <ul class="check">
+      <li>Step 4 prints <code>"id":"copilot-claude-sonnet-5"</code>. Your LiteLLM knows the new alias.</li>
+      <li>In step 5, <code>Reply with OK</code> gets an <code>OK</code> answer. The question went through Claude Code → your LiteLLM → the bridge → Copilot.</li>
+    </ul>
+  </div>
+  <div class="callout warn"><b>Extra care with an existing LiteLLM</b>
+    <ul>
+      <li><b>Use a new alias name.</b> Entries that share a <code>model_name</code> form one group, and LiteLLM spreads requests across them. Reusing a name you already serve, such as <code>claude-sonnet-5</code>, sends some of the other provider's requests to your Copilot seat.</li>
+      <li><b>Forward headers for this alias only.</b> The <code>model_group_settings</code> above is enough. <code>forward_client_headers_to_llm_api: true</code> under <code>general_settings</code> passes every client's <code>x-</code> headers to every provider your gateway calls.</li>
+      <li><b>Seat sharing.</b> Every request to this alias runs on your Copilot seat, whoever sends it. If others use your LiteLLM, limit each key's or team's <code>models</code>.</li>
+      <li><b>If the bridge is replaced</b>, its token changes. Give LiteLLM the new token and restart it; that briefly cuts off every model your LiteLLM serves.</li>
+    </ul>
+  </div>
+  <div class="callout tip"><b>When you're done — what to do next</b>
+    <ul>
+      <li><b>Keep using it.</b> Run <code>./bin/claude-litellm</code> again in Terminal B. In a new terminal, run step 4's <code>cd</code> and the three <code>export</code> lines first.</li>
+      <li><b>When you're finished.</b> <code>/exit</code> closes only Claude Code. If you no longer need the bridge, first save any <code>bridge.log</code> lines you need, then run <code>./bin/claude-ghcp-stop</code> (every session that uses this bridge loses its connection). Stop LiteLLM the way you normally do, and if you don't want the Copilot entries any more, delete them from your config and restart it. The settings file <code>claude-litellm</code> leaves behind contains your LiteLLM key; delete it as step 6 describes if you don't want it kept.</li>
+      <li><b>If you're stuck.</b> See the <a href="#trouble">troubleshooting table</a> below.</li>
+    </ul>
+  </div>
+  <p>The config fields, the <code>timeout</code> and <code>forward_llm_provider_auth_headers</code> cautions, and troubleshooting are in the LiteLLM guide: <a href="https://github.com/junwoojeong100/cc-mscp-sdk-v2/blob/main/docs/LITELLM.md#add-the-bridge-to-an-existing-litellm">Add the Bridge to an Existing LiteLLM</a>.</p>
+  <div class="done-row"><span><b>This path ends here.</b> You do not need to go back to steps 5–7.</span><a class="next" href="#trouble">Stuck? Troubleshooting table →</a></div>
 </section>
 
 <section class="panel" id="trouble" data-nav="Troubleshooting table">

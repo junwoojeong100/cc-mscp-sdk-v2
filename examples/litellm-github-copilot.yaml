@@ -8,6 +8,11 @@
 # when LiteLLM loads this file, so restart LiteLLM whenever the bridge token
 # changes.
 #
+# To add the bridge to a LiteLLM you already run, do not start a second one
+# with this file. Copy the model entries you need into your own config under
+# new model_name values, as docs/LITELLM.md, "Add the Bridge to an Existing
+# LiteLLM", describes.
+#
 # api_base must be the bridge root: LiteLLM appends /v1/messages itself.
 # The string after anthropic/ is sent as the request body's model.
 # Keep model_name free of [1m]-style suffixes: LiteLLM itself rejects such an

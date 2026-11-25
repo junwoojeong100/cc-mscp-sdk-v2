@@ -29,6 +29,15 @@ LiteLLM reaches the bridge through its `anthropic/*` provider, with `api_base` s
 bridge root. LiteLLM's own `github_copilot/*` provider is a separate integration that does
 not use this repository.
 
+Pick the section that matches your situation:
+
+- Someone else runs the gateway and gave you its URL and a key:
+  [Connect to an Existing Gateway](#connect-to-an-existing-gateway).
+- You want to run the bridge and a new LiteLLM that this repository installs:
+  [Run a Gateway](#run-a-gateway).
+- You already run a LiteLLM of your own and want it to serve Copilot models:
+  [Add the Bridge to an Existing LiteLLM](#add-the-bridge-to-an-existing-litellm).
+
 ## Connect to an Existing Gateway
 
 Use this section when someone else runs the gateway and gave you its URL and a key. You
@@ -105,7 +114,10 @@ machine as the bridge, because the bridge that `ensure` starts always listens on
 
 You need the [README requirements](../README.md#requirements), steps 1 and 2 of the
 [Direct quick start](../README.md#quick-start-direct-sdk) (`npm install` and
-`copilot login`), and `uv`, which setup uses to create a Python 3.13 environment. Run every
+`copilot login`), and `uv`, which setup uses to create a Python 3.13 environment. If you
+already run a LiteLLM of your own you do not need `uv`; do only steps 1 and 2 here, then
+continue with [Add the Bridge to an Existing LiteLLM](#add-the-bridge-to-an-existing-litellm).
+Run every
 command from the repository root. Use **terminal A** for the bridge and LiteLLM server,
 and **terminal B** for the client. The server command stays in the foreground; do not
 paste the client commands into terminal A while it is running.
@@ -198,6 +210,9 @@ The exported `GHCP_BRIDGE_TOKEN` does not affect `claude` or `claude-ghcp` launc
 this shell: they set their own token for each command they run.
 
 ### 3. Install and start LiteLLM
+
+If you already run a LiteLLM of your own, skip this step and continue with
+[Add the Bridge to an Existing LiteLLM](#add-the-bridge-to-an-existing-litellm).
 
 In **terminal A**, in the same shell as step 2, install the local runtime once.
 `npm run litellm:setup` downloads LiteLLM v1.97.0 into `.runtime/` and creates a master key
@@ -331,13 +346,153 @@ still contain the old master key; delete
 `${XDG_STATE_HOME:-~/.local/state}/claude-code-ghcp-sdk/litellm-settings/` as well if you
 want no copy of it left.
 
+That ends the gateway you started here. Skip the next section, which is for a LiteLLM you
+already run, and continue with [When the Bridge Is Replaced](#when-the-bridge-is-replaced) to
+see what to do when the bridge gets a new token.
+
+## Add the Bridge to an Existing LiteLLM
+
+Use this section when you already run a LiteLLM proxy of your own and want it to serve Copilot
+models through this repository's bridge, instead of the LiteLLM that `npm run litellm:setup`
+installs. Your LiteLLM keeps its models, keys and settings. You add the bridge to it as one
+more backend, then connect Claude Code to your LiteLLM as to any other gateway.
+
+Before you start:
+
+- **Same machine.** LiteLLM must run on the machine that runs the bridge, as a process that
+  can reach `127.0.0.1` there. The bridge that `ensure` starts listens only on loopback, and
+  this repository does not support exposing it on a network
+  ([Security Boundaries](ARCHITECTURE.md#security-boundaries)). A LiteLLM on another machine,
+  or in a container with its own network, cannot reach that address, and this repository has
+  not tested such a setup.
+- **Bridge prerequisites.** The [README requirements](../README.md#requirements) and steps 1
+  and 2 of the [Direct quick start](../README.md#quick-start-direct-sdk) (`npm install` and
+  `copilot login`). You do not need `uv`.
+- **LiteLLM version.** What this section says about LiteLLM's own behaviour is written for
+  v1.97.0, the version `npm run litellm:setup` installs, and is not tested
+  ([What Is Not Tested](#what-is-not-tested)).
+
+### 1. Start the bridge
+
+Do steps 1 and 2 of [Run a Gateway](#run-a-gateway): pin the bridge port, then start the
+bridge and capture its token. Skip step 3, which would install a second LiteLLM. After step 2,
+the shell you ran it in holds `GHCP_BRIDGE_URL` (the bridge root, with no `/v1`) and
+`GHCP_BRIDGE_TOKEN`, and the `/v1/models?all=true` check there has listed the Copilot model
+IDs you can use below.
+
+### 2. Add the models to your config
+
+Add the entries below to your LiteLLM config file, under the top-level keys it already has.
+YAML keeps only the last copy of a repeated key, so a second `model_list:` or
+`litellm_settings:` block would silently replace the first.
+
+```yaml
+model_list:
+  # ...your existing models...
+  - model_name: copilot-claude-sonnet-5
+    litellm_params:
+      model: anthropic/claude-sonnet-5
+      api_base: os.environ/GHCP_BRIDGE_URL
+      api_key: os.environ/GHCP_BRIDGE_TOKEN
+
+litellm_settings:
+  # ...your existing settings...
+  model_group_settings:
+    forward_client_headers_to_llm_api:
+      - copilot-claude-sonnet-5
+```
+
+Add one `model_list` entry for each Copilot model you want (the example config has six), with
+an ID from `./bin/ghcp-models` after `anthropic/`, and list every new `model_name` under
+`forward_client_headers_to_llm_api`. [Step 5](#5-optional-change-the-config) explains the
+fields. Four things differ when the LiteLLM already serves other models:
+
+- **Give every alias a new name.** LiteLLM treats `model_list` entries that share a
+  `model_name` as one group and spreads requests across them. If `claude-sonnet-5` already
+  points at another provider, reusing it sends some of that provider's requests to your
+  Copilot seat and some Copilot requests to that provider. The `copilot-` prefix is only a
+  suggestion. As everywhere in this guide, an alias must not contain `[1m]` or `[NNNk]`.
+- **Forward client headers for these aliases only.** The bridge needs Claude Code's
+  `x-claude-code-session-id` and `x-claude-code-agent-id` headers; without them it runs all
+  requests one at a time, as one conversation. `model_group_settings` forwards a request's
+  headers only when the request names a listed alias. The example config's
+  `general_settings.forward_client_headers_to_llm_api: true` also works, but it passes every
+  `x-` header from every client to every provider your gateway calls. Use it only if your
+  LiteLLM has no `model_group_settings`.
+- **Check `forward_llm_provider_auth_headers`.** It is off unless you set it, and it applies
+  to the whole gateway. If your gateway turns it on for other models, a request that carries
+  its own `x-api-key` sends that key to the bridge instead of the bridge token, and the
+  bridge answers `401`. `claude-litellm` sends no `x-api-key`; another client might.
+- **Keep `timeout` long.** A turn can show no output for a minute or longer, and the bridge
+  lets one run for up to 30 minutes
+  ([Rate limits and timeouts](../README.md#rate-limits-and-timeouts)). A `timeout` in these
+  entries' `litellm_params`, or in your `router_settings`, that expires first ends the request
+  with `408 litellm.Timeout`.
+
+### 3. Restart LiteLLM with the bridge variables
+
+LiteLLM reads `os.environ/` values once, when it loads the config. Start your LiteLLM again,
+the way you normally start it, with `GHCP_BRIDGE_URL` and `GHCP_BRIDGE_TOKEN` in its
+environment. From the shell of step 1 that can be:
+
+```bash
+litellm --config /absolute/path/to/your-config.yaml
+```
+
+If a service manager starts LiteLLM, set both variables in the service's environment: a
+variable exported in another shell does not reach it.
+
+### 4. Connect a client
+
+Follow [Connect to an Existing Gateway](#connect-to-an-existing-gateway) with your LiteLLM's
+root URL and a key it accepts. The bridge runs from this checkout, so you do not need to
+clone again. Its model-list check should now include your Copilot aliases. Then start Claude
+Code on one of them. If you serve more than one Copilot model, also set `LITELLM_OPUS_MODEL`,
+`LITELLM_SONNET_MODEL` and `LITELLM_HAIKU_MODEL` to your aliases.
+
+```bash
+export LITELLM_MODEL="copilot-claude-sonnet-5"
+./bin/claude-litellm
+```
+
+In Claude Code, ask `Reply with OK`. A reply confirms one request through your LiteLLM and
+the bridge, not every feature on this page, and it consumes Copilot allowance. Use `/exit` to
+leave the client; the bridge and your LiteLLM keep running. That completes the setup.
+[Keep it working](#keep-it-working) says what to watch from here, and
+[Troubleshooting](#troubleshooting) covers a failed request.
+
+### Keep it working
+
+- **The bridge is not permanent.** A reboot or `./bin/claude-ghcp-stop` stops it, and a
+  replaced bridge has a new token. Either way LiteLLM must read a new token, which means
+  restarting it, and that interrupts every model your LiteLLM serves.
+  [When the Bridge Is Replaced](#when-the-bridge-is-replaced) lists the causes and fixes.
+- **Every request to these aliases runs on your Copilot seat**, whichever key sends it
+  ([Is it right for you?](../README.md#is-it-right-for-you)). If other people use your
+  LiteLLM, keep their keys and teams from calling the Copilot aliases by limiting each key's
+  or team's `models`. That needs [virtual keys](https://docs.litellm.ai/docs/proxy/virtual_keys)
+  and their PostgreSQL database, and this repository does not test it.
+- **Cost dashboards and budgets** count these requests at LiteLLM's own prices, not at what
+  GitHub Copilot charges ([What Differs from the Direct Path](#what-differs-from-the-direct-path)).
+- **Stopping.** `/exit` leaves only the client. Stop your LiteLLM the way you normally do. To
+  stop the bridge too, first save any `bridge.log` lines you need
+  ([Diagnostics](DIAGNOSTICS.md)), then run `./bin/claude-ghcp-stop`; every `claude` or
+  `claude-ghcp` session on this machine that uses the bridge (all but print-mode runs) loses
+  its connection ([step 6](#6-stop) of Run a Gateway). To drop the Copilot models from your
+  LiteLLM, delete their entries from your config and restart it. The settings file
+  `claude-litellm` keeps holds your LiteLLM key
+  ([where](#connect-to-an-existing-gateway)).
+
 ## When the Bridge Is Replaced
 
 The gateway breaks when the bridge on port 4142 goes away or gets a new token. LiteLLM
 keeps the token it read at startup, so run every fix below in terminal A, in this order:
 press Ctrl-C if LiteLLM is still running, get the token as the row says (step 2 or
 `bridge.json`), then run `npm run litellm:start`. LiteLLM reads the token only from the
-shell that starts it, so exporting it in terminal B has no effect.
+shell that starts it, so exporting it in terminal B has no effect. If the LiteLLM is your
+own ([Add the Bridge to an Existing LiteLLM](#add-the-bridge-to-an-existing-litellm)), read
+"terminal A" as the shell that starts it, and `npm run litellm:start` as starting your
+LiteLLM again with the new token exported.
 
 | Cause | What LiteLLM gets | Fix |
 |---|---|---|
@@ -401,12 +556,14 @@ counts as a configuration change is in
 
 `npm run verify` never starts LiteLLM: it runs Claude Code against the bridge directly.
 `npm test` covers only the `claude-litellm` launcher and the settings file it writes, with a
-stand-in for Claude Code. Nothing tests `npm run litellm:setup`, `npm run litellm:start` or
-the example config. Everything this page says about LiteLLM's own behaviour (the URL it
-builds, the headers it forwards, the names it rejects, how it answers `count_tokens`, how it
-prices requests) is written for v1.97.0, the version `npm run litellm:setup` installs, and
-is not tested. Whether LiteLLM passes a bridge `429` or `529` to its client unchanged, or
-retries it first, is not tested either. For the six-scenario live suite's scope, see
+stand-in for Claude Code. Nothing tests `npm run litellm:setup`, `npm run litellm:start`, the
+example config or adding the bridge to a LiteLLM you already run. Everything this page says
+about LiteLLM's own behaviour (the URL it builds, the headers it forwards and for which model
+names, the names it rejects, how it groups entries that share a `model_name`, when it times
+out, how it answers `count_tokens`, how it prices requests) is written for v1.97.0, the
+version `npm run litellm:setup` installs, and is not tested. Whether LiteLLM passes a bridge
+`429` or `529` to its client unchanged, or retries it first, is not tested either. For the
+six-scenario live suite's scope, see
 [What works and what does not](../README.md#what-works-and-what-does-not).
 
 ## Troubleshooting
@@ -480,6 +637,19 @@ Your config lacks `forward_client_headers_to_llm_api: true`; the example file se
 Without it the bridge cannot tell conversations or subagents apart, so it runs all their
 requests one at a time, as one conversation.
 
+### Requests for an existing alias reach the bridge, or Copilot requests reach another provider
+
+Two `model_list` entries share a `model_name`, so LiteLLM spreads that alias's requests across
+both. Give the Copilot entries names your config does not already use, and use those names as
+the aliases ([Add the Bridge to an Existing LiteLLM](#2-add-the-models-to-your-config)).
+
+### `408` `litellm.Timeout` on a long turn
+
+A `timeout` in the entry's `litellm_params`, or in your `router_settings`, expired before the
+bridge answered. A turn can show no output for a minute or longer and run for up to 30 minutes
+([Rate limits and timeouts](../README.md#rate-limits-and-timeouts)). Raise the `timeout` for
+the Copilot entries.
+
 ### LiteLLM does not start because port 4000 is in use
 
 In **terminal A**, start LiteLLM on another port and leave it running:
@@ -500,5 +670,7 @@ export LITELLM_BASE_URL="http://127.0.0.1:4001"
 - [LiteLLM Anthropic provider](https://docs.litellm.ai/docs/providers/anthropic)
 - [LiteLLM Anthropic Messages endpoint](https://docs.litellm.ai/docs/anthropic_unified)
 - [LiteLLM virtual keys](https://docs.litellm.ai/docs/proxy/virtual_keys)
+- [LiteLLM load balancing](https://docs.litellm.ai/docs/proxy/load_balancing)
+- [LiteLLM forward client headers](https://docs.litellm.ai/docs/proxy/forward_client_headers)
 - [LiteLLM Claude Code quickstart](https://docs.litellm.ai/docs/tutorials/claude_responses_api)
 - [LiteLLM Claude Code compatibility matrix](https://docs.litellm.ai/docs/claude_code_compatibility)

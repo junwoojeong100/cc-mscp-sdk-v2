@@ -211,7 +211,7 @@ cd "/path/to/your-project"
 "/absolute/path/to/cc-mscp-sdk-v2/bin/claude-litellm"
 ```
 
-To connect, run a gateway, or look up what differs from Direct SDK, see the [LiteLLM guide](docs/LITELLM.md).
+To connect, run a gateway, add the bridge to a LiteLLM you already run, or look up what differs from Direct SDK, see the [LiteLLM guide](docs/LITELLM.md).
 
 ## Commands and configuration
 
@@ -349,6 +349,6 @@ Plain `npm run verify` selects the full matrix with one model worker, `--timeout
 | How to run checks, inspect failures and generate a report | [Testing](docs/TESTING.md) |
 | Whether a specific Claude Code feature works | [Compatibility](docs/COMPATIBILITY.md) |
 | Latest recorded core-scenario results by model | [Verification results](docs/VERIFICATION.md) |
-| How to use or run a LiteLLM gateway | [LiteLLM guide](docs/LITELLM.md) |
+| How to use or run a LiteLLM gateway, or add the bridge to your own LiteLLM | [LiteLLM guide](docs/LITELLM.md) |
 | Step-by-step with screenshots and video | [① Direct SDK](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_DIRECT_EN.html) · [② through LiteLLM](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_LITELLM_EN.html) · in Korean: [①](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_DIRECT_KO.html) · [②](https://junwoojeong100.github.io/cc-mscp-sdk-v2/HANDS_ON_LITELLM_KO.html) |
 | Every environment variable and its default | [`.env.example`](.env.example) |

@@ -27,6 +27,15 @@ Claude Code 또는 다른 클라이언트 -> LiteLLM -> 브리지 (src/server.mj
 LiteLLM은 `anthropic/*` 공급자로 브리지에 연결하며, `api_base`는 브리지 루트입니다.
 LiteLLM 자체의 `github_copilot/*` 공급자는 이 저장소를 쓰지 않는 별개의 연동입니다.
 
+상황에 맞는 절을 고르세요.
+
+- 다른 사람이 운영하는 게이트웨이의 URL과 키를 받았다:
+  [기존 게이트웨이에 연결](#기존-게이트웨이에-연결).
+- 브리지와, 이 저장소가 설치하는 새 LiteLLM을 직접 운영하려 한다:
+  [게이트웨이 운영](#게이트웨이-운영).
+- 이미 직접 운영하는 LiteLLM이 있고, 그 LiteLLM으로 Copilot 모델을 쓰려 한다:
+  [기존 LiteLLM에 브리지 추가](#기존-litellm에-브리지-추가).
+
 ## 기존 게이트웨이에 연결
 
 다른 사람이 운영하는 게이트웨이의 URL과 키를 받았다면 이 절을 따르세요. macOS 또는
@@ -101,7 +110,9 @@ export LITELLM_HAIKU_MODEL="claude-haiku-4.5"
 [README 준비 사항](../README_KO.md#준비-사항),
 [Direct 빠른 시작](../README_KO.md#빠른-시작-direct-sdk)의 1단계와 2단계(`npm install`,
 `copilot login`), 그리고 `uv`가 필요합니다. `uv`는 설치 스크립트가 Python 3.13 환경을
-만들 때 씁니다. 모든 명령은 저장소 루트에서 실행하세요. **터미널 A**는 브리지와 LiteLLM
+만들 때 씁니다. 이미 직접 운영하는 LiteLLM이 있다면 `uv`는 필요 없습니다. 그때는 이 절의
+1단계와 2단계만 하고 [기존 LiteLLM에 브리지 추가](#기존-litellm에-브리지-추가)로 이어 가세요.
+모든 명령은 저장소 루트에서 실행하세요. **터미널 A**는 브리지와 LiteLLM
 서버용으로, **터미널 B**는 클라이언트용으로 씁니다. 서버 명령은 포그라운드에서 계속
 실행되므로, 실행 중인 터미널 A에 클라이언트 명령을 붙여 넣지 마세요.
 
@@ -193,6 +204,9 @@ export한 `GHCP_BRIDGE_TOKEN`은 이 셸에서 실행한 `claude`나 `claude-ghc
 않습니다. 두 런처는 실행하는 명령마다 자신의 토큰을 따로 설정합니다.
 
 ### 3. LiteLLM 설치와 시작
+
+이미 직접 운영하는 LiteLLM이 있다면 이 단계를 건너뛰고
+[기존 LiteLLM에 브리지 추가](#기존-litellm에-브리지-추가)로 이어 가세요.
 
 **터미널 A**의 2단계와 같은 셸에서 로컬 런타임을 최초 한 번 설치하세요.
 `npm run litellm:setup`은 LiteLLM v1.97.0을 `.runtime/`에 내려받고 그곳에 마스터 키를
@@ -323,13 +337,150 @@ Ctrl-C로 LiteLLM을 멈추고, `.runtime/` 안에 직접 추가한 파일 중 �
 그대로 있으므로, 사본을 남기지 않으려면
 `${XDG_STATE_HOME:-~/.local/state}/claude-code-ghcp-sdk/litellm-settings/`도 지우세요.
 
+여기까지가 이 절에서 시작한 게이트웨이의 끝입니다. 이미 운영 중인 LiteLLM을 위한 다음 절은
+건너뛰고, [브리지가 교체될 때](#브리지가-교체될-때)로 이어 가서 브리지가 새 토큰을 받았을 때의
+조치를 확인하세요.
+
+## 기존 LiteLLM에 브리지 추가
+
+이미 직접 운영하는 LiteLLM 프록시가 있고, `npm run litellm:setup`이 설치하는 LiteLLM 대신 그
+LiteLLM으로 이 저장소의 브리지를 거쳐 Copilot 모델을 쓰려면 이 절을 따르세요. LiteLLM의 모델과
+키, 설정은 그대로 두고 브리지를 백엔드 하나로 더한 뒤, 다른 게이트웨이와 똑같이 Claude Code를
+그 LiteLLM에 연결합니다.
+
+시작하기 전에 확인하세요.
+
+- **같은 컴퓨터.** LiteLLM은 브리지가 실행되는 컴퓨터에서, 그곳의 `127.0.0.1`에 접근할 수 있는
+  프로세스로 실행해야 합니다. `ensure`로 시작한 브리지는 루프백에서만 요청을 받으며, 이
+  저장소는 브리지를 네트워크에 노출하는 구성을 지원하지 않습니다
+  ([보안 경계](ARCHITECTURE_KO.md#보안-경계)). 다른 컴퓨터에 있거나 자체 네트워크를 쓰는
+  컨테이너 안에 있는 LiteLLM은 그 주소에 접근할 수 없으며, 이 저장소는 그런 구성을 테스트하지
+  않았습니다.
+- **브리지 준비 사항.** [README 준비 사항](../README_KO.md#준비-사항)과
+  [Direct 빠른 시작](../README_KO.md#빠른-시작-direct-sdk)의 1단계와 2단계(`npm install`과
+  `copilot login`)가 필요합니다. `uv`는 필요하지 않습니다.
+- **LiteLLM 버전.** 이 절이 LiteLLM 자체의 동작에 관해 쓴 내용은 `npm run litellm:setup`이
+  설치하는 v1.97.0 기준이며 검증하지 않았습니다([검증하지 않은 것](#검증하지-않은-것)).
+
+### 1. 브리지 시작
+
+[게이트웨이 운영](#게이트웨이-운영)의 1단계와 2단계를 실행하세요. 브리지 포트를 고정한 뒤 브리지를
+시작하고 토큰을 받습니다. 두 번째 LiteLLM을 설치하는 3단계는 건너뛰세요. 2단계를 마치면 그
+단계를 실행한 셸에 `GHCP_BRIDGE_URL`(`/v1` 없는 브리지 루트)과 `GHCP_BRIDGE_TOKEN`이 들어 있고,
+그곳에서 `/v1/models?all=true`로 확인한 목록이 아래에서 쓸 수 있는 Copilot 모델 ID입니다.
+
+### 2. 설정에 모델 추가
+
+아래 항목을 LiteLLM 설정 파일에 더하세요. 이미 있는 최상위 키 안에 넣어야 합니다. YAML은 같은
+키가 반복되면 마지막 것만 남기므로, `model_list:`나 `litellm_settings:` 블록을 하나 더 만들면
+앞의 블록이 조용히 사라집니다.
+
+```yaml
+model_list:
+  # ...기존 모델...
+  - model_name: copilot-claude-sonnet-5
+    litellm_params:
+      model: anthropic/claude-sonnet-5
+      api_base: os.environ/GHCP_BRIDGE_URL
+      api_key: os.environ/GHCP_BRIDGE_TOKEN
+
+litellm_settings:
+  # ...기존 설정...
+  model_group_settings:
+    forward_client_headers_to_llm_api:
+      - copilot-claude-sonnet-5
+```
+
+원하는 Copilot 모델마다 `model_list` 항목을 하나씩 더하고(예제 설정 파일에는 여섯 개가
+있습니다), `anthropic/` 뒤에는 `./bin/ghcp-models`에 나오는 ID를 쓰세요. 새 `model_name`은
+모두 `forward_client_headers_to_llm_api` 아래에도 적어야 합니다. 각 필드의 의미는
+[5단계](#5-선택-설정-파일-변경)에 있습니다. LiteLLM이 이미 다른 모델을 제공한다면 다음 네 가지가
+다릅니다.
+
+- **별칭은 모두 새 이름으로 정하세요.** LiteLLM은 `model_name`이 같은 `model_list` 항목을 한
+  그룹으로 보고 요청을 나눠 보냅니다. `claude-sonnet-5`가 이미 다른 공급자를 가리키는데 이
+  이름을 다시 쓰면, 그 공급자로 갈 요청 일부가 Copilot 좌석으로 가고 Copilot 요청 일부가 그
+  공급자로 갑니다. `copilot-` 접두사는 제안일 뿐입니다. 이 가이드의 모든 별칭처럼 `[1m]`이나
+  `[NNNk]`는 붙이면 안 됩니다.
+- **이 별칭에만 클라이언트 헤더를 전달하세요.** 브리지에는 Claude Code의
+  `x-claude-code-session-id`와 `x-claude-code-agent-id` 헤더가 필요합니다. 이 헤더가 없으면
+  모든 요청을 하나의 대화처럼 한 번에 하나씩 처리합니다. `model_group_settings`는 요청이 목록에
+  적은 별칭을 부를 때만 그 요청의 헤더를 전달합니다. 예제 설정 파일의
+  `general_settings.forward_client_headers_to_llm_api: true`도 동작하지만, 모든 클라이언트의
+  `x-` 헤더를 게이트웨이가 호출하는 모든 공급자에게 전달합니다. LiteLLM에
+  `model_group_settings`가 없을 때만 쓰세요.
+- **`forward_llm_provider_auth_headers`를 확인하세요.** 직접 설정하지 않으면 꺼져 있고,
+  게이트웨이 전체에 적용됩니다. 다른 모델 때문에 이 설정을 켰다면, 자체 `x-api-key`를 실은
+  요청은 브리지 토큰 대신 그 키를 브리지로 보내고 브리지는 `401`로 답합니다.
+  `claude-litellm`은 `x-api-key`를 보내지 않지만 다른 클라이언트는 보낼 수 있습니다.
+- **`timeout`을 넉넉하게 두세요.** 턴은 1분 넘게 출력이 없을 수 있고, 브리지는 한 턴을 최대
+  30분까지 실행합니다([요청 한도와 타임아웃](../README_KO.md#요청-한도와-타임아웃)). 이 항목의
+  `litellm_params`나 `router_settings`에 적은 `timeout`이 먼저 지나면 요청은
+  `408 litellm.Timeout`으로 끝납니다.
+
+### 3. 브리지 변수와 함께 LiteLLM 다시 시작
+
+LiteLLM은 설정을 읽을 때 `os.environ/` 값을 한 번만 읽습니다. 평소 쓰던 방법으로 LiteLLM을
+다시 시작하되, 환경에 `GHCP_BRIDGE_URL`과 `GHCP_BRIDGE_TOKEN`이 있어야 합니다. 1단계의
+셸에서라면 다음과 같습니다.
+
+```bash
+litellm --config /absolute/path/to/your-config.yaml
+```
+
+서비스 관리자가 LiteLLM을 시작한다면 두 변수를 그 서비스의 환경에 설정하세요. 다른 셸에서
+export한 변수는 서비스에 전달되지 않습니다.
+
+### 4. 클라이언트 연결
+
+[기존 게이트웨이에 연결](#기존-게이트웨이에-연결)을 따르되, 자신의 LiteLLM 루트 URL과 그
+LiteLLM이 받아들이는 키를 쓰세요. 브리지가 이 체크아웃에서 실행되므로 다시 복제할 필요는
+없습니다. 그 절의 모델 목록 확인에 이제 Copilot 별칭이 나와야 합니다. 그다음 그 별칭 중
+하나로 Claude Code를 시작하세요. Copilot 모델을 여러 개 제공한다면 `LITELLM_OPUS_MODEL`,
+`LITELLM_SONNET_MODEL`, `LITELLM_HAIKU_MODEL`도 자신의 별칭으로 설정합니다.
+
+```bash
+export LITELLM_MODEL="copilot-claude-sonnet-5"
+./bin/claude-litellm
+```
+
+Claude Code 안에서 `OK라고 답해줘`를 입력하세요. 답이 오면 내 LiteLLM과 브리지를 거쳐 요청
+하나가 완료된 것이며, 이 문서의 모든 기능을 확인한 것은 아닙니다. 프롬프트는 Copilot 사용량을
+소비합니다. `/exit`로 클라이언트를 종료해도 브리지와 LiteLLM은 계속 실행됩니다. 여기까지 하면
+설정이 끝납니다. [운영 시 유의할 점](#운영-시-유의할-점)에서 앞으로 지켜볼 것을,
+[문제 해결](#문제-해결)에서 요청이 실패했을 때의 조치를 확인하세요.
+
+### 운영 시 유의할 점
+
+- **브리지는 영구적이지 않습니다.** 재부팅이나 `./bin/claude-ghcp-stop`을 하면 브리지가
+  멈추고, 교체된 브리지는 토큰이 새로 바뀝니다. 어느 쪽이든 LiteLLM이 새 토큰을 읽어야 하므로
+  LiteLLM을 다시 시작해야 하며, 그러면 그 LiteLLM이 제공하는 모든 모델이 끊깁니다. 원인과
+  해결은 [브리지가 교체될 때](#브리지가-교체될-때)에 있습니다.
+- **이 별칭으로 가는 모든 요청은 누가 보내든** 사용자의 Copilot 좌석으로 실행됩니다
+  ([적합한 용도](../README_KO.md#적합한-용도)). 다른 사람도 이 LiteLLM을 쓴다면 키나 팀의
+  `models`를 제한해 그들의 키가 Copilot 별칭을 부르지 못하게 하세요. 이를 위해서는
+  [가상 키](https://docs.litellm.ai/docs/proxy/virtual_keys)와 PostgreSQL 데이터베이스가
+  필요하며, 이 저장소는 이를 테스트하지 않습니다.
+- **비용 대시보드와 예산**은 GitHub Copilot이 실제로 청구하는 금액이 아니라 LiteLLM 자체
+  가격으로 이 요청을 계산합니다([Direct 경로와 다른 점](#direct-경로와-다른-점)).
+- **중지.** `/exit`는 클라이언트만 종료합니다. LiteLLM은 평소 방식으로 멈추세요. 브리지도
+  멈추려면 먼저 필요한 `bridge.log` 내용을 보관한 뒤([진단 가이드](DIAGNOSTICS_KO.md))
+  `./bin/claude-ghcp-stop`을 실행하세요. 이 브리지를 쓰던 이 컴퓨터의 모든 `claude`,
+  `claude-ghcp` 세션(print 모드 실행 제외)은 연결이 끊깁니다([게이트웨이 운영](#6-중지)의
+  6단계). LiteLLM에서 Copilot 모델을 빼려면 설정에서 해당 항목을 지우고 LiteLLM을 다시
+  시작하세요. `claude-litellm`이 남긴 설정 파일에는 LiteLLM 키가 들어 있습니다
+  ([위치](#기존-게이트웨이에-연결)).
+
 ## 브리지가 교체될 때
 
 포트 4142의 브리지가 사라지거나 새 토큰을 받으면 게이트웨이가 멈춥니다. LiteLLM은 시작할
 때 읽은 토큰을 계속 쓰므로, 아래 해결 방법은 모두 터미널 A에서 이 순서로 실행하세요.
 LiteLLM이 아직 실행 중이면 Ctrl-C를 누르고, 표에 나온 대로 토큰을 받은 뒤(2단계 또는
 `bridge.json`) `npm run litellm:start`를 실행합니다. LiteLLM은 자신을 시작한 셸에서만
-토큰을 읽으므로, 터미널 B에서 토큰을 export해도 효과가 없습니다.
+토큰을 읽으므로, 터미널 B에서 토큰을 export해도 효과가 없습니다. 직접 운영하는 LiteLLM이라면
+([기존 LiteLLM에 브리지 추가](#기존-litellm에-브리지-추가)) "터미널 A"는 그 LiteLLM을 시작하는
+셸로, `npm run litellm:start`는 새 토큰을 export한 상태로 LiteLLM을 다시 시작하는 것으로
+읽으세요.
 
 | 원인 | LiteLLM이 받는 것 | 해결 |
 |---|---|---|
@@ -394,12 +545,13 @@ export GHCP_BRIDGE_TOKEN="$(node -pe \
 
 `npm run verify`는 LiteLLM을 시작하지 않고, Claude Code를 브리지에 직접 연결해 실행합니다.
 `npm test`는 가짜 Claude Code 실행 파일을 써서 `claude-litellm` 런처와 이 런처가 쓰는 설정
-파일만 검사합니다. `npm run litellm:setup`, `npm run litellm:start`, 예제 설정 파일을
-다루는 테스트는 없습니다. 이 문서가 LiteLLM 자체의 동작(만드는 URL, 전달하는 헤더, 거부하는
-이름, `count_tokens` 응답 방식, 비용 계산 방식)에 관해 쓴 내용은 `npm run litellm:setup`이
-설치하는 v1.97.0 기준이며 검증하지 않았습니다. LiteLLM이 브리지의 `429`나 `529`를
-클라이언트에 그대로 넘기는지, 먼저 재시도하는지도 검증하지 않았습니다. 핵심 실측 시나리오의
-범위는 [되는 것과 안 되는 것](../README_KO.md#되는-것과-안-되는-것)을 보세요.
+파일만 검사합니다. `npm run litellm:setup`, `npm run litellm:start`, 예제 설정 파일, 이미
+운영 중인 LiteLLM에 브리지를 추가하는 구성을 다루는 테스트는 없습니다. 이 문서가 LiteLLM
+자체의 동작(만드는 URL, 어느 모델 이름에 전달하는 헤더, 거부하는 이름, `model_name`이 같은
+항목을 묶는 방식, 타임아웃이 걸리는 때, `count_tokens` 응답 방식, 비용 계산 방식)에 관해 쓴
+내용은 `npm run litellm:setup`이 설치하는 v1.97.0 기준이며 검증하지 않았습니다. LiteLLM이
+브리지의 `429`나 `529`를 클라이언트에 그대로 넘기는지, 먼저 재시도하는지도 검증하지 않았습니다.
+핵심 실측 시나리오의 범위는 [되는 것과 안 되는 것](../README_KO.md#되는-것과-안-되는-것)을 보세요.
 
 ## 문제 해결
 
@@ -472,6 +624,19 @@ Ctrl-C를 누르고, `bridge.json`에서 현재 토큰을 읽어 `GHCP_BRIDGE_TO
 있습니다. 이 설정이 없으면 브리지가 대화와 서브에이전트를 구분하지 못해, 모든 요청을 하나의
 대화처럼 한 번에 하나씩 처리합니다.
 
+### 기존 별칭의 요청이 브리지로 가거나, Copilot 요청이 다른 공급자로 감
+
+`model_list`의 두 항목이 `model_name`을 공유해서 LiteLLM이 그 별칭의 요청을 둘로 나눠 보냅니다.
+Copilot 항목에는 설정에 아직 없는 이름을 붙이고, 그 이름을 별칭으로 쓰세요
+([기존 LiteLLM에 브리지 추가](#2-설정에-모델-추가)).
+
+### 긴 턴에서 `408` `litellm.Timeout`
+
+항목의 `litellm_params`나 `router_settings`에 적은 `timeout`이 브리지가 답하기 전에
+지났습니다. 턴은 1분 넘게 출력이 없을 수 있고 최대 30분까지 실행됩니다
+([요청 한도와 타임아웃](../README_KO.md#요청-한도와-타임아웃)). Copilot 항목의 `timeout`을
+늘리세요.
+
 ### 포트 4000이 이미 사용 중이라 LiteLLM이 시작하지 않음
 
 **터미널 A**에서 다른 포트로 LiteLLM을 시작하고 실행 중인 채로 두세요.
@@ -491,5 +656,7 @@ export LITELLM_BASE_URL="http://127.0.0.1:4001"
 - [LiteLLM Anthropic 공급자](https://docs.litellm.ai/docs/providers/anthropic)
 - [LiteLLM Anthropic Messages 엔드포인트](https://docs.litellm.ai/docs/anthropic_unified)
 - [LiteLLM 가상 키](https://docs.litellm.ai/docs/proxy/virtual_keys)
+- [LiteLLM 로드 밸런싱](https://docs.litellm.ai/docs/proxy/load_balancing)
+- [LiteLLM 클라이언트 헤더 전달](https://docs.litellm.ai/docs/proxy/forward_client_headers)
 - [LiteLLM Claude Code 빠른 시작](https://docs.litellm.ai/docs/tutorials/claude_responses_api)
 - [LiteLLM Claude Code 호환성 표](https://docs.litellm.ai/docs/claude_code_compatibility)
